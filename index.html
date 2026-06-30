@@ -924,6 +924,81 @@ function closeIntro() {
       </div>
     </div>
   </div>
+
+  <div class="card" style="margin-bottom:6px;">
+    <div class="card-head" style="cursor:pointer;user-select:none;" onclick="toggleCard('tep-seccion',this)">
+      🔴 Evaluación Ecocardiográfica — TEP / Sobrecarga VD Aguda
+      <span id="tep-arrow" style="float:right;transition:transform 0.2s;">▶</span>
+    </div>
+  </div>
+  <div id="tep-seccion" style="display:none;">
+  <div class="card">
+    <div class="card-body">
+
+      <p style="font-size:11px;color:var(--text2);margin-bottom:12px;">
+        Criterios ESC 2019 — Disfunción VD por sobrecarga aguda de presión (TEP/HTP aguda).
+        Se calculan automáticamente los valores disponibles del estudio actual.
+      </p>
+
+      <!-- Campos nuevos -->
+      <div class="grid-2" style="margin-bottom:10px;">
+        <div class="fg"><label>Signo de McConnell</label>
+          <select id="tep_mcconnell" onchange="calcTEP()">
+            <option value="no">No</option>
+            <option value="si">Sí — hipoquinesia pared libre VD con ápex conservado</option>
+          </select>
+        </div>
+        <div class="fg"><label>Signo 60/60</label>
+          <select id="tep_signo6060" onchange="calcTEP()">
+            <option value="no">No</option>
+            <option value="si">Sí — AT pulmonar &lt;60ms + Gmax IT &lt;60 mmHg</option>
+          </select>
+        </div>
+        <div class="fg"><label>Tabique en D (aplanamiento septal)</label>
+          <select id="tep_tabique_d" onchange="calcTEP()">
+            <option value="no">No</option>
+            <option value="si">Sí</option>
+          </select>
+        </div>
+        <div class="fg"><label>Relación VD/VI (manual si no calculado)</label>
+          <input type="number" id="tep_vdvi" placeholder="ratio" step="0.01" oninput="calcTEP()">
+          <span style="font-size:10px;color:var(--text2);">Patológico: ≥0.9</span>
+        </div>
+      </div>
+
+      <!-- Resultados automáticos -->
+      <div class="calc-box">
+        <div style="font-size:11px;font-weight:700;color:var(--accent2);margin-bottom:8px;">ÍNDICES Y SCORE</div>
+        <div class="calc-row"><span class="calc-lbl">TAPSE/PSAP (acoplamiento VD-AP)</span><span id="tep-tapse-psap">—</span></div>
+        <div class="calc-row"><span class="calc-lbl">Relación VD/VI</span><span id="tep-vdvi-interp">—</span></div>
+        <div class="calc-row"><span class="calc-lbl">TAPSE — función sistólica VD</span><span id="tep-tapse-interp">—</span></div>
+        <div class="calc-row"><span class="calc-lbl">PSAP estimada</span><span id="tep-psap-interp">—</span></div>
+        <div class="calc-row"><span class="calc-lbl">Signo de McConnell</span><span id="tep-mcconnell-interp">—</span></div>
+        <div class="calc-row"><span class="calc-lbl">Signo 60/60</span><span id="tep-6060-interp">—</span></div>
+        <div class="calc-row"><span class="calc-lbl">Tabique en D</span><span id="tep-tabiqued-interp">—</span></div>
+        <div style="border-top:1px solid var(--border);margin:8px 0;"></div>
+        <div class="calc-row">
+          <span class="calc-lbl" style="font-weight:700;">Score criterios VD (+/7)</span>
+          <span id="tep-score" style="font-weight:700;font-size:14px;">—</span>
+        </div>
+        <div class="calc-row">
+          <span class="calc-lbl" style="font-weight:700;">Interpretación</span>
+          <span id="tep-interpretacion" style="font-weight:700;">—</span>
+        </div>
+        <div class="calc-row">
+          <span class="calc-lbl" style="font-weight:700;">⚠️ Estratificación ESC 2019</span>
+          <span id="tep-estratificacion" style="font-weight:700;">—</span>
+        </div>
+        <div class="calc-row">
+          <span class="calc-lbl" style="font-weight:700;">📐 TAPSE/PSAP</span>
+          <span id="tep-acoplamiento" style="font-weight:700;">—</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  </div>
+
 </div>
 
 <!-- ═══════════════════════ TAB: DOPPLER ═══════════════════════ -->
@@ -5359,6 +5434,34 @@ z
   </div>
 
   <div class="card">
+    <div class="card-head" style="cursor:pointer;user-select:none;" onclick="toggleRef('tep',this)">
+      🔴 TEP — Criterios Ecocardiográficos y Estratificación ESC 2019
+      <span style="float:right;">▶</span>
+    </div>
+    <div id="ref-tep" style="display:none;" class="card-body">
+      <div style="font-size:12px;color:var(--text);line-height:1.8;">
+        <b style="color:var(--accent2);">Criterios de disfunción VD (≥2 = disfunción significativa):</b><br>
+        • Dilatación VD: VD/VI ≥0.9 en A4C<br>
+        • Disfunción sistólica: TAPSE &lt;17mm<br>
+        • PSAP elevada: &gt;35 mmHg<br>
+        • Signo de McConnell: hipoquinesia pared libre VD con ápex conservado (especificidad ~94% para TEP)<br>
+        • Signo 60/60: AT pulmonar &lt;60ms + Gmax IT &lt;60 mmHg<br>
+        • Tabique en D: aplanamiento septal en eje corto paraesternal<br>
+        • AD dilatada: área &gt;18 cm²<br><br>
+        <b style="color:var(--accent2);">Índice TAPSE/PSAP — acoplamiento VD-AP:</b><br>
+        • &gt;0.32 mm/mmHg → acoplamiento conservado<br>
+        • ≤0.32 mm/mmHg → desacoplamiento — mal pronóstico independiente<br><br>
+        <b style="color:var(--accent2);">Estratificación ESC 2019:</b><br>
+        • 🔴 Alto riesgo: shock/hipotensión + disfunción VD → reperfusión urgente<br>
+        • 🟠 Intermedio-alto: normotenso + disfunción VD + biomarcadores elevados<br>
+        • 🟡 Intermedio-bajo: normotenso + disfunción VD o biomarcadores (no ambos)<br>
+        • 🟢 Bajo riesgo: normotenso + sin disfunción VD + biomarcadores negativos<br><br>
+        <b style="color:var(--accent2);">Limitaciones:</b> Ningún signo eco es patognomónico de TEP. El signo de McConnell puede verse en IAM VD. Siempre correlacionar con clínica, score de Wells y CTPA.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
     <div class="card-head" style="cursor:pointer;user-select:none;" onclick="toggleRef('oai',this)">
       👂 OAI — Orejuela Izquierda y Cierre Percutáneo
       <span style="float:right;">▶</span>
@@ -5795,6 +5898,7 @@ function calcVD() {
     let t = sp >= 10 ? badge('green','Normal (≥10 cm/s)') : badge('red','Disfunción (< 10 cm/s)');
     document.getElementById('sprime-interp').innerHTML = t;
   }
+  if (typeof calcTEP === 'function') calcTEP();
 }
 
 // ══ AD / PmAD ══
@@ -5804,6 +5908,146 @@ function calcAD() {
   let t = ad <= 18 ? badge('green','Normal (≤18cm²)') : badge('yellow','Dilatada (>18cm²)');
   document.getElementById('ad-interp').innerHTML = t;
 }
+
+// ══ TEP / Sobrecarga VD aguda ══
+function toggleCard(sectionId, headEl) {
+  const sec = document.getElementById(sectionId);
+  if (!sec) return;
+  const visible = sec.style.display !== 'none';
+  sec.style.display = visible ? 'none' : 'block';
+  const arrow = headEl ? headEl.querySelector('span') : null;
+  if (arrow) arrow.style.transform = visible ? 'rotate(0deg)' : 'rotate(90deg)';
+}
+window.toggleCard = toggleCard;
+
+function calcTEP() {
+  const tapse   = v('tapse');
+  const psap    = v('psap_calc');
+  const vdBas   = v('vd_bas');
+  const ddfvi   = v('ddfvi');
+  const adArea  = v('ad_area');
+
+  // VD/VI ratio — usar campo manual o calcular
+  let vdvi = v('tep_vdvi');
+  if (!vdvi && vdBas && ddfvi) vdvi = parseFloat((vdBas / ddfvi).toFixed(2));
+  if (!vdvi && v('vd_vi')) vdvi = v('vd_vi');
+
+  const mcconnell  = document.getElementById('tep_mcconnell')?.value === 'si';
+  const signo6060  = document.getElementById('tep_signo6060')?.value === 'si';
+  const tabiqued   = document.getElementById('tep_tabique_d')?.value === 'si';
+
+  let score = 0;
+  const criterios = [];
+
+  // 1. TAPSE/PSAP
+  const tapsePsapEl = document.getElementById('tep-tapse-psap');
+  if (tapse && psap) {
+    const idx = (tapse / psap).toFixed(3);
+    const ok  = parseFloat(idx) > 0.32;
+    if (tapsePsapEl) tapsePsapEl.innerHTML = ok
+      ? badge('green',  idx + ' mm/mmHg — acoplamiento conservado')
+      : badge('red',    idx + ' mm/mmHg — desacoplamiento VD-AP');
+    const acEl = document.getElementById('tep-acoplamiento');
+    if (acEl) acEl.innerHTML = ok
+      ? badge('green',  'TAPSE/PSAP ' + idx + ' — conservado (>0.32)')
+      : badge('red',    'TAPSE/PSAP ' + idx + ' — desacoplado (≤0.32)');
+  } else if (tapsePsapEl) tapsePsapEl.textContent = '—';
+
+  // 2. VD/VI
+  const vdviEl = document.getElementById('tep-vdvi-interp');
+  if (vdvi !== null) {
+    const patol = vdvi >= 0.9;
+    if (patol) score++;
+    criterios.push('VD/VI');
+    if (vdviEl) vdviEl.innerHTML = patol
+      ? badge('red',    'VD/VI ' + vdvi + ' — dilatación VD (≥0.9) ✓')
+      : badge('green',  'VD/VI ' + vdvi + ' — normal (<0.9)');
+  } else if (vdviEl) vdviEl.textContent = '—';
+
+  // 3. TAPSE
+  const tapseEl = document.getElementById('tep-tapse-interp');
+  if (tapse !== null) {
+    const patol = tapse < 17;
+    if (patol) score++;
+    criterios.push('TAPSE');
+    if (tapseEl) tapseEl.innerHTML = patol
+      ? badge('red',    'TAPSE ' + tapse + ' mm — disfunción VD ✓')
+      : badge('green',  'TAPSE ' + tapse + ' mm — normal (≥17mm)');
+  } else if (tapseEl) tapseEl.textContent = '—';
+
+  // 4. PSAP
+  const psapEl = document.getElementById('tep-psap-interp');
+  if (psap !== null) {
+    const patol = psap > 35;
+    if (patol) score++;
+    criterios.push('PSAP');
+    if (psapEl) psapEl.innerHTML = patol
+      ? badge('red',    'PSAP ' + psap + ' mmHg — elevada (>35 mmHg) ✓')
+      : badge('green',  'PSAP ' + psap + ' mmHg — normal');
+  } else if (psapEl) psapEl.textContent = '—';
+
+  // 5. McConnell
+  const mcEl = document.getElementById('tep-mcconnell-interp');
+  if (mcconnell) { score++; criterios.push('McConnell'); }
+  if (mcEl) mcEl.innerHTML = mcconnell
+    ? badge('red',   'Presente — altamente específico de TEP ✓')
+    : badge('green', 'Ausente');
+
+  // 6. Signo 60/60
+  const s60El = document.getElementById('tep-6060-interp');
+  if (signo6060) { score++; criterios.push('60/60'); }
+  if (s60El) s60El.innerHTML = signo6060
+    ? badge('red',   'Presente ✓')
+    : badge('green', 'Ausente');
+
+  // 7. Tabique en D
+  const tdEl = document.getElementById('tep-tabiqued-interp');
+  if (tabiqued) { score++; criterios.push('Tabique D'); }
+  if (tdEl) tdEl.innerHTML = tabiqued
+    ? badge('red',   'Presente — sobrecarga de presión VD ✓')
+    : badge('green', 'Ausente');
+
+  // Score final
+  const total = criterios.length;
+  const scoreEl = document.getElementById('tep-score');
+  const interpEl = document.getElementById('tep-interpretacion');
+  const estEl = document.getElementById('tep-estratificacion');
+
+  if (total === 0) {
+    if (scoreEl) scoreEl.textContent = '—';
+    if (interpEl) interpEl.textContent = 'Completar campos para calcular';
+    if (estEl) estEl.textContent = '—';
+    return;
+  }
+
+  if (scoreEl) scoreEl.innerHTML = score >= 2
+    ? badge('red',    score + '/' + total + ' criterios positivos')
+    : badge('green',  score + '/' + total + ' criterios positivos');
+
+  // Interpretación
+  if (interpEl) {
+    if (score === 0) interpEl.innerHTML = badge('green', 'Sin criterios de disfunción VD significativa');
+    else if (score === 1) interpEl.innerHTML = badge('yellow', 'Criterio aislado — bajo valor diagnóstico individual');
+    else if (score >= 2 && score <= 3) interpEl.innerHTML = badge('orange', 'Disfunción VD moderada — compatible con sobrecarga aguda de presión');
+    else interpEl.innerHTML = badge('red', 'Disfunción VD severa — alta probabilidad de TEP/HTP aguda (' + score + ' criterios)');
+  }
+
+  // Estratificación ESC 2019
+  if (estEl) {
+    const tapsePsapVal = (tapse && psap) ? tapse / psap : null;
+    const desacoplado = tapsePsapVal !== null && tapsePsapVal <= 0.32;
+    if (score >= 4 || (score >= 2 && desacoplado)) {
+      estEl.innerHTML = badge('red', '🔴 Riesgo ALTO — disfunción VD severa, evaluar reperfusión urgente');
+    } else if (score >= 2) {
+      estEl.innerHTML = badge('orange', '🟠 Riesgo INTERMEDIO-ALTO — monitorización estrecha, considerar imagen confirmatoria');
+    } else if (score === 1) {
+      estEl.innerHTML = badge('yellow', '🟡 Riesgo INTERMEDIO-BAJO — criterio aislado, correlacionar con clínica y scores');
+    } else {
+      estEl.innerHTML = badge('green', '🟢 Sin criterios de disfunción VD significativa por eco');
+    }
+  }
+}
+window.calcTEP = calcTEP;
 
 function calcPmAD() {
   const diam = v('vci_diam'), col = sv('vci_col');
@@ -5833,6 +6077,7 @@ function calcPSAP() {
   else if (psap <= 70) h = badge('orange','HTP moderada (56-70mmHg)');
   else h = badge('red','HTP severa (>70mmHg)');
   document.getElementById('htp-interp').innerHTML = h;
+  if (typeof calcTEP === 'function') calcTEP();
 }
 
 // ══ DIASTOL ══
