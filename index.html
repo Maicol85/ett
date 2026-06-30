@@ -5647,6 +5647,123 @@ z
     </div>
   </div>
 
+  <div class="card">
+    <div class="card-head" style="cursor:pointer;user-select:none;" onclick="toggleRef('formulas',this)">
+      📐 Fórmulas — Cálculos Ecocardiográficos y Hemodinámicos
+      <span style="float:right;">▶</span>
+    </div>
+    <div id="ref-formulas" style="display:none;" class="card-body">
+
+      <!-- 1. ANTROPOMETRÍA -->
+      <div style="font-size:12px;font-weight:700;color:var(--accent2);margin:0 0 6px;">🧍 Antropometría</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px;">
+        <tr style="background:var(--section-head);"><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Nombre</th><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Fórmula</th><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Normal</th></tr>
+        <tr><td style="padding:5px 8px;font-weight:700;">ASC — Mosteller</td><td style="padding:5px 8px;font-family:monospace;">√(Peso × Talla / 3600)</td><td style="padding:5px 8px;">1.5–2.0 m²</td></tr>
+      </table>
+
+      <!-- 2. VENTRÍCULO IZQUIERDO -->
+      <div style="font-size:12px;font-weight:700;color:var(--accent2);margin:0 0 6px;">🫀 Ventrículo Izquierdo</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px;">
+        <tr style="background:var(--section-head);"><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Nombre</th><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Fórmula</th><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Normal</th></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-weight:700;">Masa VI — Devereux</td><td style="padding:5px 8px;font-family:monospace;">0.8 × [1.04 × (DDFVI+SIV+PPVI)³ − DDFVI³] + 0.6</td><td style="padding:5px 8px;">H &lt;224g · M &lt;162g</td></tr>
+        <tr style="border-bottom:1px solid var(--border);background:var(--bg3);"><td style="padding:5px 8px;font-weight:700;">Masa VI indexada</td><td style="padding:5px 8px;font-family:monospace;">Masa (g) / ASC (m²)</td><td style="padding:5px 8px;">H ≤115 · M ≤95 g/m²</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-weight:700;">GRP / RWT</td><td style="padding:5px 8px;font-family:monospace;">(2 × PPVI) / DDFVI</td><td style="padding:5px 8px;">&lt;0.42</td></tr>
+        <tr style="background:var(--bg3);"><td style="padding:5px 8px;font-weight:700;">Geometría VI</td><td style="padding:5px 8px;font-family:monospace;">RWT + Masa indexada → Normal / Remodelado concéntrico / HVI excéntrica / HVI concéntrica</td><td style="padding:5px 8px;">—</td></tr>
+      </table>
+
+      <!-- 3. FUNCIÓN SISTÓLICA -->
+      <div style="font-size:12px;font-weight:700;color:var(--accent2);margin:0 0 6px;">💉 Función Sistólica y Gasto Cardíaco</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px;">
+        <tr style="background:var(--section-head);"><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Nombre</th><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Fórmula</th><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Normal</th></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-weight:700;">Volumen Sistólico (VS)</td><td style="padding:5px 8px;font-family:monospace;">π × (ØTSVI/2)² × VTI_TSVI</td><td style="padding:5px 8px;">60–100 ml</td></tr>
+        <tr style="border-bottom:1px solid var(--border);background:var(--bg3);"><td style="padding:5px 8px;font-weight:700;">Gasto Cardíaco (GC)</td><td style="padding:5px 8px;font-family:monospace;">VS × FC</td><td style="padding:5px 8px;">4–8 L/min</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-weight:700;">Índice Cardíaco (IC)</td><td style="padding:5px 8px;font-family:monospace;">GC / ASC</td><td style="padding:5px 8px;">2.5–4.0 L/min/m²</td></tr>
+        <tr style="background:var(--bg3);"><td style="padding:5px 8px;font-weight:700;">AVA — Continuidad</td><td style="padding:5px 8px;font-family:monospace;">π × (ØTSVI/2)² × VTI_TSVI / VTI_VAo</td><td style="padding:5px 8px;">&gt;2.0 cm²</td></tr>
+      </table>
+
+      <!-- 4. DOPPLER -->
+      <div style="font-size:12px;font-weight:700;color:var(--accent2);margin:0 0 6px;">〰️ Doppler</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px;">
+        <tr style="background:var(--section-head);"><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Nombre</th><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Fórmula</th><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Normal</th></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-weight:700;">Bernoulli simplificada</td><td style="padding:5px 8px;font-family:monospace;">ΔP = 4 × Vmax²</td><td style="padding:5px 8px;">—</td></tr>
+        <tr style="border-bottom:1px solid var(--border);background:var(--bg3);"><td style="padding:5px 8px;font-weight:700;">PSAP</td><td style="padding:5px 8px;font-family:monospace;">4 × V_IT² + PmAD</td><td style="padding:5px 8px;">≤40 mmHg</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-weight:700;">PAP diastólica (PADP)</td><td style="padding:5px 8px;font-family:monospace;">4 × V_IP² + PmAD</td><td style="padding:5px 8px;">≤15 mmHg</td></tr>
+        <tr style="border-bottom:1px solid var(--border);background:var(--bg3);"><td style="padding:5px 8px;font-weight:700;">PAPm — por Mahan (TAP)</td><td style="padding:5px 8px;font-family:monospace;">79 − 0.45 × TAP (ms)</td><td style="padding:5px 8px;">&lt;20 mmHg</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-weight:700;">PAPm — estimada</td><td style="padding:5px 8px;font-family:monospace;">(PSAP + 2×PADP) / 3</td><td style="padding:5px 8px;">&lt;20 mmHg</td></tr>
+        <tr style="border-bottom:1px solid var(--border);background:var(--bg3);"><td style="padding:5px 8px;font-weight:700;">E/A</td><td style="padding:5px 8px;font-family:monospace;">Onda E / Onda A</td><td style="padding:5px 8px;">0.8–2.0</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-weight:700;">E/e' promedio</td><td style="padding:5px 8px;font-family:monospace;">Onda E / ((e'sep + e'lat) / 2)</td><td style="padding:5px 8px;">≤14</td></tr>
+        <tr style="background:var(--bg3);"><td style="padding:5px 8px;font-weight:700;">AVA por THP (EM)</td><td style="padding:5px 8px;font-family:monospace;">220 / THP</td><td style="padding:5px 8px;">&gt;2.5 cm²</td></tr>
+      </table>
+
+      <!-- 5. PISA / INSUFICIENCIA MITRAL -->
+      <div style="font-size:12px;font-weight:700;color:var(--accent2);margin:0 0 6px;">🩸 Insuficiencia Mitral — Método PISA</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px;">
+        <tr style="background:var(--section-head);"><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Nombre</th><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Fórmula</th><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Severa si</th></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-weight:700;">ORE</td><td style="padding:5px 8px;font-family:monospace;">2π × r² × V_aliasing / V_max</td><td style="padding:5px 8px;">≥0.40 cm²</td></tr>
+        <tr style="border-bottom:1px solid var(--border);background:var(--bg3);"><td style="padding:5px 8px;font-weight:700;">Volumen Regurgitante (VR)</td><td style="padding:5px 8px;font-family:monospace;">ORE × VTI_IM</td><td style="padding:5px 8px;">≥60 ml</td></tr>
+        <tr><td style="padding:5px 8px;font-weight:700;">Fracción Regurgitante (FR)</td><td style="padding:5px 8px;font-family:monospace;">(VR / VS) × 100</td><td style="padding:5px 8px;">≥50%</td></tr>
+      </table>
+
+      <!-- 6. FUNCIÓN DIASTÓLICA BSE 2024 -->
+      <div style="font-size:12px;font-weight:700;color:var(--accent2);margin:0 0 6px;">💓 Función Diastólica — BSE 2024</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px;">
+        <tr style="background:var(--section-head);"><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Parámetro</th><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Fórmula</th><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Patológico</th></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-weight:700;">E/e' promedio</td><td style="padding:5px 8px;font-family:monospace;">E / ((e'sep + e'lat) / 2)</td><td style="padding:5px 8px;">&gt;14</td></tr>
+        <tr style="border-bottom:1px solid var(--border);background:var(--bg3);"><td style="padding:5px 8px;font-weight:700;">LAVI</td><td style="padding:5px 8px;font-family:monospace;">Vol_AI / ASC</td><td style="padding:5px 8px;">&gt;34 ml/m²</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-weight:700;">e' promedio</td><td style="padding:5px 8px;font-family:monospace;">(e'sep + e'lat) / 2</td><td style="padding:5px 8px;">≤6.5 cm/s</td></tr>
+        <tr style="border-bottom:1px solid var(--border);background:var(--bg3);"><td style="padding:5px 8px;font-weight:700;">e' septal</td><td style="padding:5px 8px;font-family:monospace;">Tisular septal</td><td style="padding:5px 8px;">≤7 cm/s</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-weight:700;">e' lateral</td><td style="padding:5px 8px;font-family:monospace;">Tisular lateral</td><td style="padding:5px 8px;">≤10 cm/s</td></tr>
+        <tr style="background:var(--bg3);"><td style="padding:5px 8px;font-weight:700;">Vmax IT (marcador)</td><td style="padding:5px 8px;font-family:monospace;">Doppler continuo IT</td><td style="padding:5px 8px;">&gt;2.8 m/s</td></tr>
+      </table>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:14px;line-height:1.6;">
+        <b style="color:var(--accent2);">FEVI conservada — marcadores positivos/3:</b>
+        0/3 o 1/3 → Grado I · 2/3 o 3/3 → Grado II · E/A ≥2 + Tdecel ≤160ms → Grado III<br>
+        <b style="color:var(--accent2);">FEVI reducida — marcadores positivos/3:</b>
+        0/3 o 1/3 → Grado I (presiones normales) · 2/3 o 3/3 → Grado II (presiones elevadas)
+      </div>
+
+      <!-- 7. HEMODINÁMICA -->
+      <div style="font-size:12px;font-weight:700;color:var(--accent2);margin:0 0 6px;">🏥 Hemodinámica y Presión de Capilar Pulmonar</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px;">
+        <tr style="background:var(--section-head);"><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Nombre</th><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Fórmula</th><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Normal</th></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-weight:700;">PCP — Nagueh</td><td style="padding:5px 8px;font-family:monospace;">1.9 + (1.24 × E/e')</td><td style="padding:5px 8px;">≤15 mmHg</td></tr>
+        <tr style="border-bottom:1px solid var(--border);background:var(--bg3);"><td style="padding:5px 8px;font-weight:700;">Gradiente Transpulmonar (GTP)</td><td style="padding:5px 8px;font-family:monospace;">PAPm − PCP</td><td style="padding:5px 8px;">&lt;12 mmHg</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-weight:700;">RVP (dinas)</td><td style="padding:5px 8px;font-family:monospace;">(PAPm − PCP) / GC × 80</td><td style="padding:5px 8px;">&lt;120 dinas·s·cm⁻⁵</td></tr>
+        <tr style="border-bottom:1px solid var(--border);background:var(--bg3);"><td style="padding:5px 8px;font-weight:700;">RVP — Unidades Wood</td><td style="padding:5px 8px;font-family:monospace;">(PAPm − PCP) / GC</td><td style="padding:5px 8px;">&lt;1.5–2.0 UW</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-weight:700;">RVS (dinas)</td><td style="padding:5px 8px;font-family:monospace;">(PAM − PmAD) / GC × 80</td><td style="padding:5px 8px;">900–1200 dinas·s·cm⁻⁵</td></tr>
+        <tr style="background:var(--bg3);"><td style="padding:5px 8px;font-weight:700;">PAM</td><td style="padding:5px 8px;font-family:monospace;">(PAS + 2×PAD) / 3</td><td style="padding:5px 8px;">70–100 mmHg</td></tr>
+      </table>
+
+      <!-- 8. DX DIFERENCIAL HTP -->
+      <div style="font-size:12px;font-weight:700;color:var(--accent2);margin:0 0 6px;">🫁 Diagnóstico Diferencial HTP por Hemodinámica</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px;">
+        <tr style="background:var(--section-head);"><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Patrón</th><th style="padding:6px 8px;text-align:center;color:var(--accent2);">PAPm</th><th style="padding:6px 8px;text-align:center;color:var(--accent2);">PCP</th><th style="padding:6px 8px;text-align:center;color:var(--accent2);">RVP</th><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Etiología</th></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-weight:700;color:var(--accent);">HTP precapilar</td><td style="padding:5px 8px;text-align:center;">&gt;20 mmHg</td><td style="padding:5px 8px;text-align:center;">≤15 mmHg</td><td style="padding:5px 8px;text-align:center;">&gt;2 UW</td><td style="padding:5px 8px;">HAP, HTECP, enf. pulmonar</td></tr>
+        <tr style="border-bottom:1px solid var(--border);background:var(--bg3);"><td style="padding:5px 8px;font-weight:700;color:var(--yellow);">HTP postcapilar aislada</td><td style="padding:5px 8px;text-align:center;">&gt;20 mmHg</td><td style="padding:5px 8px;text-align:center;">&gt;15 mmHg</td><td style="padding:5px 8px;text-align:center;">&lt;2 UW</td><td style="padding:5px 8px;">IC izquierda, valvular</td></tr>
+        <tr><td style="padding:5px 8px;font-weight:700;color:var(--red);">HTP postcapilar combinada</td><td style="padding:5px 8px;text-align:center;">&gt;20 mmHg</td><td style="padding:5px 8px;text-align:center;">&gt;15 mmHg</td><td style="padding:5px 8px;text-align:center;">≥2 UW</td><td style="padding:5px 8px;">IC + remodelado vascular</td></tr>
+      </table>
+
+      <!-- 9. ÍNDICES CRÍTICOS -->
+      <div style="font-size:12px;font-weight:700;color:var(--accent2);margin:0 0 6px;">🩺 Índices para Paciente Crítico</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px;">
+        <tr style="background:var(--section-head);"><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Nombre</th><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Fórmula</th><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Normal</th></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-weight:700;">DO₂ — Transporte O₂</td><td style="padding:5px 8px;font-family:monospace;">GC × Hb × 1.34 × SaO₂ × 10</td><td style="padding:5px 8px;">950–1150 ml/min</td></tr>
+        <tr style="border-bottom:1px solid var(--border);background:var(--bg3);"><td style="padding:5px 8px;font-weight:700;">VO₂ — Consumo O₂</td><td style="padding:5px 8px;font-family:monospace;">GC × (CaO₂ − CvO₂) × 10</td><td style="padding:5px 8px;">200–250 ml/min</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-weight:700;">Extracción O₂</td><td style="padding:5px 8px;font-family:monospace;">VO₂ / DO₂ × 100</td><td style="padding:5px 8px;">22–30%</td></tr>
+        <tr style="background:var(--bg3);"><td style="padding:5px 8px;font-weight:700;">Qp/Qs — Shunt</td><td style="padding:5px 8px;font-family:monospace;">VTI_Ao × ØTSVI² / VTI_VP × ØTSVD²</td><td style="padding:5px 8px;">= 1.0</td></tr>
+      </table>
+
+      <!-- 10. VD -->
+      <div style="font-size:12px;font-weight:700;color:var(--accent2);margin:0 0 6px;">➡️ Ventrículo Derecho y TEP</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px;">
+        <tr style="background:var(--section-head);"><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Nombre</th><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Fórmula</th><th style="padding:6px 8px;text-align:left;color:var(--accent2);">Normal</th></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:5px 8px;font-weight:700;">TAPSE/PSAP — acoplamiento VD-AP</td><td style="padding:5px 8px;font-family:monospace;">TAPSE (mm) / PSAP (mmHg)</td><td style="padding:5px 8px;">&gt;0.32 mm/mmHg</td></tr>
+        <tr style="background:var(--bg3);"><td style="padding:5px 8px;font-weight:700;">Relación VD/VI</td><td style="padding:5px 8px;font-family:monospace;">VD_basal / DDFVI</td><td style="padding:5px 8px;">&lt;0.9</td></tr>
+      </table>
+
+    </div>
+  </div>
+
 </div>
 
 <!-- ═══════════════════════ TAB: INFORME ═══════════════════════ -->
