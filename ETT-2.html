@@ -351,6 +351,11 @@ window.cerrarSesion = cerrarSesion;
   <div class="hdr-btns">
     <button class="btn btn-ghost" id="theme-toggle-btn" onclick="toggleTheme()" title="Cambiar modo día/noche">🌙 Noche</button>
     <button class="btn btn-ghost" onclick="limpiar()">🗑 Limpiar</button>
+    <span style="display:inline-flex;gap:4px;align-items:center;border-left:1px solid var(--border);padding-left:8px;margin-left:2px;" title="Estilo del informe">
+      <button type="button" class="btn btn-ghost estilo-pill" data-estilo="conciso" onclick="setEstiloInforme('conciso')" title="Informe conciso" style="padding:6px 8px;">📋</button>
+      <button type="button" class="btn btn-primary estilo-pill" data-estilo="estandar" onclick="setEstiloInforme('estandar')" title="Informe estándar" style="padding:6px 8px;">📄</button>
+      <button type="button" class="btn btn-ghost estilo-pill" data-estilo="narrativo" onclick="setEstiloInforme('narrativo')" title="Informe narrativo" style="padding:6px 8px;">📖</button>
+    </span>
     <button class="btn btn-primary" onclick="generarInforme()">📝 Generar Informe</button>
     <button class="btn btn-green" onclick="generarPDF()">⬇️ PDF</button>
     <button class="btn btn-ghost" onclick="showIntro()" title="Ayuda / Guía de uso" style="padding:6px 10px;font-size:14px;">?</button>
@@ -5492,6 +5497,14 @@ z
   <div class="card">
     <div class="card-head">📄 Informe Narrativo</div>
     <div class="card-body">
+      <div class="fg" style="margin-bottom:10px;">
+        <label>Estilo del informe</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button type="button" class="btn btn-ghost estilo-pill" data-estilo="conciso" onclick="setEstiloInforme('conciso')">📋 Conciso</button>
+          <button type="button" class="btn btn-primary estilo-pill" data-estilo="estandar" onclick="setEstiloInforme('estandar')">📄 Estándar</button>
+          <button type="button" class="btn btn-ghost estilo-pill" data-estilo="narrativo" onclick="setEstiloInforme('narrativo')">📖 Narrativo</button>
+        </div>
+      </div>
       <div class="fg">
         <label>Informe (autogenerado — editable)</label>
         <textarea id="informe_texto" style="min-height:200px;" placeholder="Presione 'Generar Informe' para autocompletar..."></textarea>
@@ -6338,6 +6351,36 @@ function calcContIM() {
 }
 
 // ══ GENERAR INFORME ══
+// ══ ESTILO DE INFORME (Conciso / Estándar / Narrativo) ══
+let estiloInforme = 'estandar';
+function estiloPick(c, e, n) {
+  if (estiloInforme === 'conciso')   return c;
+  if (estiloInforme === 'narrativo') return (n || e || c);
+  return (e || c);
+}
+function _syncEstiloPills(estilo) {
+  document.querySelectorAll('.estilo-pill').forEach(b => {
+    const on = b.getAttribute('data-estilo') === estilo;
+    b.classList.toggle('btn-primary', on);
+    b.classList.toggle('btn-ghost', !on);
+  });
+}
+function setEstiloInforme(estilo) {
+  estiloInforme = estilo;
+  try { localStorage.setItem('ett_estilo_informe', estilo); } catch(e){}
+  _syncEstiloPills(estilo);
+  const ta = document.getElementById('informe_texto');
+  if (ta && ta.value.trim()) generarInforme();
+}
+function initEstiloInforme() {
+  let saved = 'estandar';
+  try { saved = localStorage.getItem('ett_estilo_informe') || 'estandar'; } catch(e){}
+  estiloInforme = saved;
+  _syncEstiloPills(saved);
+}
+window.setEstiloInforme = setEstiloInforme;
+setTimeout(initEstiloInforme, 50);
+
 function generarInforme() {
   const bsa = getBSA();
   const fevi = v('fevi');
@@ -6362,18 +6405,30 @@ function generarInforme() {
   let dimVI = null;
   if (ddfvi) {
     dimVI = ddfvi <= 58 ? 'de dimensiones normales' : ddfvi <= 65 ? 'levemente dilatado' : 'dilatado';
-    inf.push(`Ventrículo izquierdo ${dimVI} (DDFVI ${ddfvi} mm).`);
-    if (dimVI !== 'de dimensiones normales') suma.push(`VI ${dimVI}.`);
+    const normalVI = dimVI === 'de dimensiones normales';
+    const c1 = `VI ${dimVI} (DDFVI ${ddfvi} mm).`;
+    const e1 = normalVI
+      ? `Ventrículo izquierdo de dimensiones normales (diámetro diastólico ${ddfvi} mm).`
+      : `Ventrículo izquierdo ${dimVI} con diámetro diastólico de ${ddfvi} mm.`;
+    const n1 = normalVI
+      ? `El ventrículo izquierdo presenta dimensiones dentro de límites normales, con un diámetro diastólico de ${ddfvi} mm.`
+      : `El ventrículo izquierdo se encuentra ${dimVI}, con un diámetro diastólico de ${ddfvi} mm, hallazgo que sugiere remodelado por sobrecarga de volumen o miocardiopatía dilatada.`;
+    inf.push(estiloPick(c1, e1, n1));
+    if (!normalVI) suma.push(`VI ${dimVI}.`);
   }
 
   // ── 2. FUNCIÓN SISTÓLICA (FEVI) ──
   if (fevi !== null) {
-    let feviConcepto, feviSuma;
-    if (fevi >= 55) { feviConcepto = 'conservada'; feviSuma = `FEVI conservada (${fevi}%).`; }
-    else if (fevi >= 50) { feviConcepto = 'levemente reducida'; feviSuma = `FEVI levemente reducida (${fevi}%).`; }
-    else if (fevi >= 40) { feviConcepto = 'moderadamente reducida'; feviSuma = `FEVI moderadamente reducida (${fevi}%).`; }
-    else { feviConcepto = 'severamente reducida'; feviSuma = `FEVI severamente reducida (${fevi}%).`; }
-    inf.push(`Función sistólica ${feviConcepto} (FEVI ${fevi}% por ${sv('fevi_met') || 'Simpson biplano'}).`);
+    let feviConcepto, feviSuma, feviNarr, feviTail;
+    if (fevi >= 55) { feviConcepto = 'conservada'; feviSuma = `FEVI conservada (${fevi}%).`; feviNarr = 'conservada'; feviTail = ', sin evidencia de compromiso de la función sistólica global'; }
+    else if (fevi >= 50) { feviConcepto = 'levemente reducida'; feviSuma = `FEVI levemente reducida (${fevi}%).`; feviNarr = 'levemente reducida'; feviTail = ', compatible con disfunción sistólica leve'; }
+    else if (fevi >= 40) { feviConcepto = 'moderadamente reducida'; feviSuma = `FEVI moderadamente reducida (${fevi}%).`; feviNarr = 'moderadamente reducida'; feviTail = ', compatible con disfunción sistólica moderada'; }
+    else { feviConcepto = 'severamente reducida'; feviSuma = `FEVI severamente reducida (${fevi}%).`; feviNarr = 'severamente comprometida'; feviTail = ', compatible con miocardiopatía con disfunción sistólica severa'; }
+    const metodo = sv('fevi_met') || 'Simpson biplano';
+    const c2 = `FEVI ${feviConcepto} (${fevi}%).`;
+    const e2 = `Función sistólica ${feviConcepto}, FEVI ${fevi}% por ${metodo}.`;
+    const n2 = `La función sistólica global se encuentra ${feviNarr}, con una fracción de eyección del ventrículo izquierdo de ${fevi}% estimada por método de ${metodo}${feviTail}.`;
+    inf.push(estiloPick(c2, e2, n2));
     suma.push(feviSuma);
   }
 
@@ -6448,62 +6503,88 @@ function generarInforme() {
     else if (parseFloat(aiIdx) <= 41) { aiStr = 'levemente dilatada'; aiSuma = `AI levemente dilatada (Vol Index ${aiIdx} ml/m²).`; }
     else if (parseFloat(aiIdx) <= 48) { aiStr = 'moderadamente dilatada'; aiSuma = `AI moderadamente dilatada (Vol Index ${aiIdx} ml/m²).`; }
     else { aiStr = 'severamente dilatada'; aiSuma = `AI severamente dilatada (Vol Index ${aiIdx} ml/m²).`; }
-    inf.push(`Aurícula izquierda ${aiStr} (Vol Index ${aiIdx} ml/m²).`);
+    const aiNormal = aiStr === 'de dimensiones normales';
+    const cAI = `AI ${aiStr} (LAVi ${aiIdx}).`;
+    const eAI = `Aurícula izquierda ${aiStr} (Vol Index ${aiIdx} ml/m²).`;
+    const nAI = aiNormal
+      ? `La aurícula izquierda es de dimensiones normales (volumen indexado ${aiIdx} ml/m²).`
+      : `La aurícula izquierda se encuentra ${aiStr}, con un volumen indexado de ${aiIdx} ml/m², hallazgo que puede reflejar elevación crónica de las presiones de llenado o valvulopatía asociada.`;
+    inf.push(estiloPick(cAI, eAI, nAI));
     if (aiSuma) suma.push(aiSuma);
   } else if (ai_diam) {
     const aiStr = ai_diam <= 38 ? 'de dimensiones normales' : ai_diam <= 42 ? 'levemente dilatada' : 'dilatada';
-    inf.push(`Aurícula izquierda ${aiStr} (diámetro AP ${ai_diam} mm).`);
+    const cAI = `AI ${aiStr} (${ai_diam} mm).`;
+    const eAI = `Aurícula izquierda ${aiStr} (diámetro AP ${ai_diam} mm).`;
+    const nAI = `La aurícula izquierda es ${aiStr}, con un diámetro anteroposterior de ${ai_diam} mm.`;
+    inf.push(estiloPick(cAI, eAI, nAI));
   } else {
-    inf.push('Aurícula izquierda de dimensiones normales.');
+    inf.push(estiloPick('AI normal.', 'Aurícula izquierda de dimensiones normales.', 'La aurícula izquierda es de dimensiones normales.'));
   }
 
   // ── VÁLVULA MITRAL ──
   const vmMorf = sv('vm_morf') || 'normal';
   const emDesc = emG && emG !== 'Sin estenosis' ? emG.toLowerCase() : null;
-  if (imG === 0 && !emDesc) {
-    inf.push(`Válvula mitral de morfología ${vmMorf.toLowerCase()}, sin estenosis ni insuficiencia.`);
-  } else {
-    let mitLine = `Válvula mitral de morfología ${vmMorf.toLowerCase()}`;
-    if (emDesc) { mitLine += `, con estenosis ${emDesc}`; suma.push(`EM ${emDesc}.`); }
-    else mitLine += ', sin estenosis';
-    if (imG > 0) { mitLine += `, con insuficiencia ${imTxt[imG]}`; suma.push(`IM ${imTxt[imG]}.`); }
-    else mitLine += ', sin insuficiencia';
-    inf.push(mitLine + '.');
+  {
+    const partsC = [], partsE = [];
+    if (emDesc) { partsC.push(`EM ${emDesc}`); partsE.push(`estenosis ${emDesc}`); suma.push(`EM ${emDesc}.`); }
+    if (imG > 0) { partsC.push(`IM ${imTxt[imG]}`); partsE.push(`insuficiencia ${imTxt[imG]}`); suma.push(`IM ${imTxt[imG]}.`); }
+    if (partsC.length === 0) {
+      inf.push(estiloPick(
+        `VM normal.`,
+        `Válvula mitral de morfología ${vmMorf.toLowerCase()}, sin estenosis ni insuficiencia.`,
+        `La válvula mitral presenta morfología ${vmMorf.toLowerCase()}, sin evidencia de estenosis ni insuficiencia significativas.`));
+    } else {
+      inf.push(estiloPick(
+        `VM con ${partsC.join(' y ')}.`,
+        `Válvula mitral de morfología ${vmMorf.toLowerCase()}, con ${partsE.join(' y ')}.`,
+        `La válvula mitral presenta morfología ${vmMorf.toLowerCase()} con ${partsE.join(' y ')}, hallazgo de relevancia clínica que requiere seguimiento ecocardiográfico periódico y evaluación de indicación de intervención según evolución clínica.`));
+    }
   }
 
   // ── VÁLVULA AÓRTICA ──
   const vaMorf = sv('va_morf') || 'trivalva';
   const eaDesc = eaG && eaG !== 'Sin estenosis' && eaG !== 'Esclerosis' ? eaG.toLowerCase() : null;
   const esclerosis = eaG === 'Esclerosis';
-  if (iaG === 0 && !eaDesc && !esclerosis) {
-    inf.push(`Válvula aórtica ${vaMorf.toLowerCase()}, sin estenosis ni insuficiencia.`);
-  } else {
-    let aoLine = `Válvula aórtica ${vaMorf.toLowerCase()}`;
-    if (esclerosis) aoLine += ', con esclerosis valvular';
-    if (eaDesc) { aoLine += `, con estenosis ${eaDesc}`; suma.push(`EAo ${eaDesc}.`); }
-    else if (!esclerosis) aoLine += ', sin estenosis';
-    if (iaG > 0) { aoLine += `, con insuficiencia ${imTxt[iaG]}`; suma.push(`IAo ${imTxt[iaG]}.`); }
-    else aoLine += ', sin insuficiencia';
-    inf.push(aoLine + '.');
+  {
+    const partsC = [], partsE = [];
+    if (esclerosis) { partsC.push('esclerosis'); partsE.push('esclerosis valvular'); }
+    if (eaDesc) { partsC.push(`EAo ${eaDesc}`); partsE.push(`estenosis ${eaDesc}`); suma.push(`EAo ${eaDesc}.`); }
+    if (iaG > 0) { partsC.push(`IAo ${imTxt[iaG]}`); partsE.push(`insuficiencia ${imTxt[iaG]}`); suma.push(`IAo ${imTxt[iaG]}.`); }
+    if (partsC.length === 0) {
+      inf.push(estiloPick(
+        `VAo normal.`,
+        `Válvula aórtica ${vaMorf.toLowerCase()}, sin estenosis ni insuficiencia.`,
+        `La válvula aórtica es ${vaMorf.toLowerCase()}, sin evidencia de estenosis ni insuficiencia significativas.`));
+    } else {
+      inf.push(estiloPick(
+        `VAo con ${partsC.join(' y ')}.`,
+        `Válvula aórtica ${vaMorf.toLowerCase()}, con ${partsE.join(' y ')}.`,
+        `La válvula aórtica (${vaMorf.toLowerCase()}) presenta ${partsE.join(' y ')}, hallazgo que requiere seguimiento ecocardiográfico y valoración de indicación de intervención según evolución clínica.`));
+    }
   }
 
   // ── VENTRÍCULO DERECHO ──
   if (tapse || sp) {
     const vdDim = v('vd_bas') ? (v('vd_bas') <= 41 ? 'dimensiones normales' : 'dilatado') : 'dimensiones no valoradas';
-    let vdFunc;
+    let vdFunc, vdDisf = false;
     const tapseOk = tapse ? tapse >= 17 : null;
     const spOk = sp ? sp >= 10 : null;
     if (tapseOk !== false && spOk !== false) {
       vdFunc = 'función sistólica conservada';
     } else {
-      vdFunc = 'disfunción sistólica';
+      vdFunc = 'disfunción sistólica'; vdDisf = true;
       suma.push('Disfunción sistólica VD.');
     }
-    let vdLine = `Ventrículo derecho de ${vdDim} con ${vdFunc}`;
-    if (tapse) vdLine += ` (TAPSE ${tapse} mm`;
-    if (sp) vdLine += tapse ? `, S' ${sp} cm/s)` : ` (S' ${sp} cm/s)`;
-    else if (tapse) vdLine += ')';
-    inf.push(vdLine + '.');
+    let datosVD = '';
+    if (tapse) datosVD += `TAPSE ${tapse} mm`;
+    if (sp) datosVD += (tapse ? `, S' ${sp} cm/s` : `S' ${sp} cm/s`);
+    const datosVDp = datosVD ? ` (${datosVD})` : '';
+    const cVD = `VD con ${vdFunc}${datosVDp}.`;
+    const eVD = `Ventrículo derecho de ${vdDim} con ${vdFunc}${datosVDp}.`;
+    const nVD = vdDisf
+      ? `El ventrículo derecho (${vdDim}) presenta disfunción sistólica evidenciada por ${datosVD || 'los parámetros disponibles'} (TAPSE normal ≥17 mm), hallazgo que en el contexto clínico puede reflejar compromiso del ventrículo derecho secundario a sobrecarga de presión o miocardiopatía.`
+      : `El ventrículo derecho (${vdDim}) presenta función sistólica conservada${datosVDp}.`;
+    inf.push(estiloPick(cVD, eVD, nVD));
   }
 
   // ── AD ──
@@ -6518,50 +6599,79 @@ function generarInforme() {
   // ── TRICÚSPIDE / ESTENOSIS / PSAP ──
   const etG = sv('et_grado') || '';
   const etDesc = etG && etG !== 'Sin estenosis' ? etG.toLowerCase() : null;
-  const tricParts = [];
+  const tricC = [], tricE = [];
   const itTrv = v('vmax_it');
-  if (etDesc) { tricParts.push(`estenosis ${etDesc}`); suma.push(`ET ${etDesc}.`); }
-  if (itG > 0) { tricParts.push(`insuficiencia ${imTxt[itG]}`); suma.push(`IT ${imTxt[itG]}.`); }
-  else if (itTrv > 0) { tricParts.push('insuficiencia'); suma.push('IT presente.'); }
-  if (tricParts.length > 0) {
-    let tricLine = `Válvula tricúspide con ${tricParts.join(' e ')}`;
-    if (psap) tricLine += `, que permite estimar PSAP de ${psap} mmHg`;
-    inf.push(tricLine + '.');
+  if (etDesc) { tricC.push(`ET ${etDesc}`); tricE.push(`estenosis ${etDesc}`); suma.push(`ET ${etDesc}.`); }
+  if (itG > 0) { tricC.push(`IT ${imTxt[itG]}`); tricE.push(`insuficiencia ${imTxt[itG]}`); suma.push(`IT ${imTxt[itG]}.`); }
+  else if (itTrv > 0) { tricC.push('IT'); tricE.push('insuficiencia'); suma.push('IT presente.'); }
+  if (tricC.length > 0) {
+    const psapFrag = psap ? ` (PSAP ${psap} mmHg)` : '';
+    const cT = `VT con ${tricC.join(' y ')}${psapFrag}.`;
+    let eT = `Válvula tricúspide con ${tricE.join(' e ')}`;
+    if (psap) eT += `, que permite estimar PSAP de ${psap} mmHg`;
+    let nT = `La válvula tricúspide presenta ${tricE.join(' e ')}`;
+    if (psap) nT += `, lo que permite estimar una presión sistólica de la arteria pulmonar de ${psap} mmHg`;
+    inf.push(estiloPick(cT, eT + '.', nT + '.'));
   } else if (psap) {
-    inf.push(`Válvula tricúspide sin insuficiencia significativa que permite estimar PSAP de ${psap} mmHg.`);
+    inf.push(estiloPick(
+      `Sin IT significativa (PSAP ${psap} mmHg).`,
+      `Válvula tricúspide sin insuficiencia significativa que permite estimar PSAP de ${psap} mmHg.`,
+      `La válvula tricúspide no presenta insuficiencia significativa, estimándose una presión sistólica de la arteria pulmonar de ${psap} mmHg.`));
   } else {
-    inf.push('Válvula tricúspide sin insuficiencia que permita estimar PSAP.');
+    inf.push(estiloPick(
+      `Sin IT que permita estimar PSAP.`,
+      `Válvula tricúspide sin insuficiencia que permita estimar PSAP.`,
+      `La válvula tricúspide no presenta insuficiencia que permita la estimación de la presión pulmonar.`));
   }
 
   // ── VÁLVULA PULMONAR ──
   const vpMorf = sv('vp_morf') || 'Normal';
   const vpVmax = v('vp_vmax'), vpGmax = v('vp_gmax');
-  if (vpMorf === 'Normal' && !vpVmax && !vpGmax) {
-    inf.push('Válvula pulmonar normal.');
-  } else {
-    let vpLine = `Válvula pulmonar ${vpMorf.toLowerCase()}`;
-    if (vpVmax) vpLine += ` (Vmax ${vpVmax} m/s`;
-    if (vpGmax) vpLine += vpVmax ? `, Gmax ${vpGmax} mmHg)` : ` (Gmax ${vpGmax} mmHg)`;
-    else if (vpVmax) vpLine += ')';
-    inf.push(vpLine + '.');
-    if (vpMorf !== 'Normal') suma.push(`VP — ${vpMorf}.`);
+  {
+    let datosVP = '';
+    if (vpVmax) datosVP += `Vmax ${vpVmax} m/s`;
+    if (vpGmax) datosVP += (vpVmax ? `, Gmax ${vpGmax} mmHg` : `Gmax ${vpGmax} mmHg`);
+    const datosVPp = datosVP ? ` (${datosVP})` : '';
+    if (vpMorf === 'Normal' && !vpVmax && !vpGmax) {
+      inf.push(estiloPick('VP normal.', 'Válvula pulmonar normal.', 'La válvula pulmonar presenta morfología y flujo dentro de límites normales.'));
+    } else {
+      inf.push(estiloPick(
+        `VP ${vpMorf.toLowerCase()}${datosVPp}.`,
+        `Válvula pulmonar ${vpMorf.toLowerCase()}${datosVPp}.`,
+        `La válvula pulmonar presenta ${vpMorf.toLowerCase()}${datosVPp}.`));
+      if (vpMorf !== 'Normal') suma.push(`VP — ${vpMorf}.`);
+    }
   }
 
   // ── HTP ──
   if (psap) {
     const psapN = parseFloat(psap);
-    if (psapN > 60) { inf.push(`Hipertensión pulmonar severa (PSAP ${psap} mmHg).`); suma.push(`HTP severa (PSAP ${psap} mmHg).`); }
-    else if (psapN > 55) { inf.push(`Hipertensión pulmonar moderada (PSAP ${psap} mmHg).`); suma.push(`HTP moderada (PSAP ${psap} mmHg).`); }
-    else if (psapN > 40) { inf.push(`Hipertensión pulmonar leve (PSAP ${psap} mmHg).`); suma.push(`HTP leve (PSAP ${psap} mmHg).`); }
+    let htpGr = null;
+    if (psapN > 60) htpGr = 'severa';
+    else if (psapN > 55) htpGr = 'moderada';
+    else if (psapN > 40) htpGr = 'leve';
+    if (htpGr) {
+      const cH = `HTP ${htpGr} (PSAP ${psap} mmHg).`;
+      const eH = `Hipertensión pulmonar ${htpGr} estimada por velocidad de IT, PSAP ${psap} mmHg.`;
+      const nH = `Se estima hipertensión pulmonar ${htpGr} con una presión sistólica de la arteria pulmonar de ${psap} mmHg calculada a partir de la velocidad pico de insuficiencia tricuspídea, hallazgo que requiere evaluación etiológica dirigida.`;
+      inf.push(estiloPick(cH, eH, nH));
+      suma.push(`HTP ${htpGr} (PSAP ${psap} mmHg).`);
+    }
   }
 
   // ── RAÍZ AORTA ──
   if (ao_sin) {
     const aoStr = ao_sin <= 40 ? 'de calibre normal' : ao_sin <= 45 ? 'levemente dilatada' : 'dilatada';
-    inf.push(`Raíz de Aorta ${aoStr} (Seno de Valsalva ${ao_sin} mm).`);
-    if (ao_sin > 40) suma.push(`Dilatación raíz aórtica (${ao_sin} mm).`);
+    const aoDil = ao_sin > 40;
+    const cAo = `Raíz Ao ${aoStr} (${ao_sin} mm).`;
+    const eAo = `Raíz de Aorta ${aoStr} (Seno de Valsalva ${ao_sin} mm).`;
+    const nAo = aoDil
+      ? `La raíz aórtica se encuentra ${aoStr}, con un diámetro a nivel de los senos de Valsalva de ${ao_sin} mm, hallazgo que amerita control evolutivo del calibre aórtico.`
+      : `La raíz aórtica es de calibre normal, con un diámetro a nivel de los senos de Valsalva de ${ao_sin} mm.`;
+    inf.push(estiloPick(cAo, eAo, nAo));
+    if (aoDil) suma.push(`Dilatación raíz aórtica (${ao_sin} mm).`);
   } else {
-    inf.push('Raíz de Aorta de calibre normal.');
+    inf.push(estiloPick('Raíz Ao normal.', 'Raíz de Aorta de calibre normal.', 'La raíz aórtica es de calibre normal.'));
   }
 
   // ── VCI / PmAD ──
@@ -6574,9 +6684,15 @@ function generarInforme() {
   // ── PERICARDIO ──
   const peri = sv('pericardio');
   if (!peri || peri === 'Normal, sin derrame') {
-    inf.push('Sin derrame pericárdico. Sin masas intracardíacas.');
+    inf.push(estiloPick(
+      'Sin derrame pericárdico. Sin masas.',
+      'Sin derrame pericárdico. Sin masas intracardíacas.',
+      'No se observa derrame pericárdico ni masas intracardíacas.'));
   } else {
-    inf.push(`${peri}. Sin masas intracardíacas.`);
+    inf.push(estiloPick(
+      `${peri}. Sin masas.`,
+      `${peri}. Sin masas intracardíacas.`,
+      `Se observa ${peri.toLowerCase()}, sin evidencia de masas intracardíacas; hallazgo que requiere correlación clínica y control evolutivo.`));
     suma.push(peri + '.');
   }
 
@@ -6632,7 +6748,8 @@ function generarInforme() {
         s += ' Contraste espontáneo: ' + (sm[oSec] || oSec) + '.';
       }
       if (oTrombo === 'si') s += ' Hallazgo que contraindica cardioversión eléctrica.';
-      etePars.push(s);
+      const sN = 'En el estudio transesofágico, ' + s.charAt(0).toLowerCase() + s.slice(1);
+      etePars.push(estiloInforme === 'narrativo' ? sN : s);
     }
 
     // 3. Elegibilidad cierre percutáneo OAI
@@ -6657,7 +6774,10 @@ function generarInforme() {
         '4': 'placas complejas protuyentes ≥5 mm, alto riesgo embólico (Grado 4)',
         '5': 'protrusiones móviles de cualquier tamaño, muy alto riesgo embólico (Grado 5)'
       };
-      etePars.push('Aorta torácica: ' + (aoMap[aoG] || 'Grado ' + aoG) + '.');
+      const aoDesc = (aoMap[aoG] || 'Grado ' + aoG);
+      etePars.push(estiloInforme === 'narrativo'
+        ? ('En la evaluación transesofágica, la aorta torácica presenta ' + aoDesc + ', hallazgo con implicancias en la estratificación del riesgo embólico.')
+        : ('Aorta torácica: ' + aoDesc + '.'));
     }
 
     if (etePars.length) inf.push('', ...etePars);
