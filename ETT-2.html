@@ -6958,6 +6958,57 @@ function generarInforme() {
     }
   }
 
+  // ── TEP / DISFUNCIÓN VD AGUDA ──
+  (function() {
+    const tapse   = v('tapse');
+    const psap    = v('psap_calc');
+    const vdBas   = v('vd_bas');
+    const ddfvi   = v('ddfvi');
+    let vdvi      = v('tep_vdvi');
+    if (!vdvi && vdBas && ddfvi) vdvi = parseFloat((vdBas / ddfvi).toFixed(2));
+
+    const mcconnell = document.getElementById('tep_mcconnell')?.value === 'si';
+    const signo6060 = document.getElementById('tep_signo6060')?.value === 'si';
+    const tabiqued  = document.getElementById('tep_tabique_d')?.value === 'si';
+
+    // Solo incluir en informe si hay al menos 1 campo TEP completado
+    const hayDatos = mcconnell || signo6060 || tabiqued || v('tep_vdvi') !== null;
+    if (!hayDatos) return;
+
+    let score = 0;
+    if (vdvi !== null && vdvi >= 0.9) score++;
+    if (tapse !== null && tapse < 17) score++;
+    if (psap !== null && psap > 35) score++;
+    if (mcconnell) score++;
+    if (signo6060) score++;
+    if (tabiqued) score++;
+
+    const tapsePsapVal = (tapse && psap) ? (tapse / psap).toFixed(3) : null;
+    const desacoplado  = tapsePsapVal !== null && parseFloat(tapsePsapVal) <= 0.32;
+
+    let estratif, estratifSuma;
+    if (score >= 4 || (score >= 2 && desacoplado)) {
+      estratif      = 'Riesgo ALTO — disfunción VD severa, evaluar reperfusión urgente (ESC 2019)';
+      estratifSuma  = 'TEP/sobrecarga VD: riesgo ALTO.';
+    } else if (score >= 2) {
+      estratif      = 'Riesgo INTERMEDIO-ALTO — disfunción VD con ' + score + ' criterios positivos, correlacionar con clínica y biomarcadores (ESC 2019)';
+      estratifSuma  = 'TEP/sobrecarga VD: riesgo intermedio-alto (' + score + ' criterios).';
+    } else if (score === 1) {
+      estratif      = 'Riesgo INTERMEDIO-BAJO — criterio aislado de disfunción VD, correlacionar con score de Wells y CTPA (ESC 2019)';
+      estratifSuma  = 'TEP/sobrecarga VD: criterio aislado de disfunción VD.';
+    } else {
+      estratif      = 'Sin criterios ecocardiográficos de disfunción VD significativa por sobrecarga aguda de presión';
+      estratifSuma  = null;
+    }
+
+    let linea = 'Evaluación ecocardiográfica de sobrecarga VD aguda (TEP): ' + score + ' criterio(s) positivo(s).';
+    if (tapsePsapVal) linea += ' Índice TAPSE/PSAP ' + tapsePsapVal + ' mm/mmHg (' + (desacoplado ? 'desacoplamiento VD-AP' : 'acoplamiento conservado') + ').';
+    linea += ' ' + estratif + '.';
+
+    inf.push(linea);
+    if (estratifSuma) suma.push(estratifSuma);
+  })();
+
   // ── RAÍZ AORTA ──
   if (ao_sin) {
     const aoStr = ao_sin <= 40 ? 'de calibre normal' : ao_sin <= 45 ? 'levemente dilatada' : 'dilatada';
