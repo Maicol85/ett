@@ -4870,7 +4870,6 @@ z
     </div>
   </div>
   </div>
-  </div>
 
   <div class="card" style="margin-bottom:8px;">
     <div class="card-head" style="cursor:pointer;user-select:none;" onclick="toggleEteSeccion('oai',this)">
@@ -5016,8 +5015,6 @@ z
       </div>
     </div>
   </div>
-  </div>
-
   </div>
 
 </div>
@@ -6239,10 +6236,14 @@ function calcVP() {
   if (!vmax && !gmax) return;
   let opcion, origen;
   if (vmax) {
-    opcion = vmax < 3 ? 'Estenosis leve' : 'Estenosis moderada/severa';
+    if (vmax < 1.5) opcion = 'Normal';
+    else if (vmax < 3) opcion = 'Estenosis leve';
+    else opcion = 'Estenosis moderada/severa';
     origen = `Vmax ${vmax} m/s`;
   } else {
-    opcion = gmax < 36 ? 'Estenosis leve' : 'Estenosis moderada/severa';
+    if (gmax < 9) opcion = 'Normal';
+    else if (gmax < 36) opcion = 'Estenosis leve';
+    else opcion = 'Estenosis moderada/severa';
     origen = `Gmax ${gmax} mmHg`;
   }
   const sel = document.getElementById('vp_morf');
@@ -6518,8 +6519,10 @@ function generarInforme() {
   const etG = sv('et_grado') || '';
   const etDesc = etG && etG !== 'Sin estenosis' ? etG.toLowerCase() : null;
   const tricParts = [];
+  const itTrv = v('vmax_it');
   if (etDesc) { tricParts.push(`estenosis ${etDesc}`); suma.push(`ET ${etDesc}.`); }
   if (itG > 0) { tricParts.push(`insuficiencia ${imTxt[itG]}`); suma.push(`IT ${imTxt[itG]}.`); }
+  else if (itTrv > 0) { tricParts.push('insuficiencia'); suma.push('IT presente.'); }
   if (tricParts.length > 0) {
     let tricLine = `Válvula tricúspide con ${tricParts.join(' e ')}`;
     if (psap) tricLine += `, que permite estimar PSAP de ${psap} mmHg`;

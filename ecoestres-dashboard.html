@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoEstrés Dashboard</title>
+<style>
+:root{
+  --p:#1565C0;--pd:#0D47A1;--pl:#1976D2;
+  --bg:#EEF2F7;--surf:#fff;--border:#BBDEFB;
+  --txt:#1A237E;--txt2:#546E7A;
+  --ok:#2E7D32;--ok-bg:#E8F5E9;
+  --warn:#E65100;--warn-bg:#FFF3E0;
+  --err:#B71C1C;--err-bg:#FFEBEE;
+  --acc:#42A5F5;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+
+/* HEADER */
+header{background:linear-gradient(135deg,var(--pd),var(--pl));color:#fff;padding:0 24px;height:60px;display:flex;align-items:center;gap:14px;box-shadow:0 3px 10px rgba(13,71,161,.4)}
+header h1{font-size:1.1rem;font-weight:700}
+.hdr-sub{font-size:.75rem;opacity:.75;margin-top:1px}
+.hdr-info{display:flex;flex-direction:column}
+.hdr-right{margin-left:auto;font-size:.78rem;opacity:.8;text-align:right}
+
+/* LAYOUT */
+.main-grid{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:16px;max-width:1400px;margin:0 auto}
+@media(max-width:900px){.main-grid{grid-template-columns:1fr}}
+
+/* CARDS */
+.card{background:var(--surf);border-radius:12px;box-shadow:0 2px 8px rgba(13,71,161,.08);border:1px solid var(--border);overflow:hidden}
+.card-hdr{background:var(--p);color:#fff;padding:10px 16px;font-size:.84rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.card-body{padding:14px}
+
+/* FORM */
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.fg label{font-size:.7rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px}
+.fg input,.fg select,.fg textarea{padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:.84rem;color:var(--txt);font-family:inherit;outline:none;background:var(--surf);transition:.15s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(66,165,245,.15)}
+.fg textarea{resize:vertical;min-height:64px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* TABS */
+.tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:14px}
+.tab{padding:8px 14px;font-size:.78rem;font-weight:600;cursor:pointer;color:var(--txt2);border-bottom:2px solid transparent;margin-bottom:-2px;transition:.15s;background:none;border-top:none;border-left:none;border-right:none}
+.tab.active{color:var(--p);border-bottom-color:var(--p)}
+.tab:hover:not(.active){color:var(--txt)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* PROTOCOLO */
+.proto-step{border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden}
+.proto-step-hdr{background:#E3F2FD;padding:8px 12px;font-size:.8rem;font-weight:700;color:var(--p);cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none}
+.proto-step-hdr:hover{background:#BBDEFB}
+.proto-step-body{padding:10px 12px;font-size:.78rem;line-height:1.7;display:none}
+.proto-step-body.open{display:block}
+.proto-pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:600;margin:2px}
+.pp-b{background:#E3F2FD;color:#1565C0}
+.pp-g{background:#E8F5E9;color:#2E7D32}
+.pp-r{background:#FFEBEE;color:#C62828}
+.pp-y{background:#FFF9C4;color:#827717}
+.proto-nota{background:#E8F5E9;border-left:3px solid #2E7D32;border-radius:5px;padding:6px 10px;font-size:.75rem;color:#1B5E20;margin-top:6px;line-height:1.5}
+.proto-warn{background:#FFF9C4;border-left:3px solid #F9A825;border-radius:5px;padding:6px 10px;font-size:.75rem;color:#827717;margin-top:6px;line-height:1.5}
+
+/* BULL'S EYE */
+.eye-wrap{display:flex;flex-direction:column;align-items:center;gap:10px}
+.eye-legend{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.eye-leg-item{display:flex;align-items:center;gap:4px;font-size:.7rem;font-weight:600;color:var(--txt)}
+.eye-leg-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.eye-wmsi-box{background:#E3F2FD;border-radius:8px;padding:10px 20px;text-align:center;width:100%}
+.eye-wmsi-val{font-size:2rem;font-weight:800;color:var(--p)}
+.eye-wmsi-lbl{font-size:.7rem;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px}
+.eye-wmsi-cat{font-size:.8rem;font-weight:700;margin-top:3px}
+
+/* BOTONES */
+.btn{padding:9px 18px;border:none;border-radius:8px;font-size:.84rem;font-weight:700;cursor:pointer;transition:.15s;font-family:inherit}
+.btn-p{background:var(--p);color:#fff}
+.btn-p:hover{background:var(--pd)}
+.btn-g{background:#2E7D32;color:#fff}
+.btn-g:hover{background:#1B5E20}
+.btn-ghost{background:#EEF2F7;color:var(--txt2);border:1px solid var(--border)}
+.btn-ghost:hover{background:#E3F2FD;color:var(--p)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+
+/* RESULTADO */
+.result-box{border-radius:8px;padding:10px 14px;font-size:.8rem;line-height:1.6;margin-top:8px;display:none}
+.result-box.show{display:block}
+.rb-pos{background:var(--err-bg);border:1px solid #EF9A9A;color:var(--err)}
+.rb-neg{background:var(--ok-bg);border:1px solid #A5D6A7;color:var(--ok)}
+.rb-inc{background:var(--warn-bg);border:1px solid #FFCC80;color:var(--warn)}
+
+/* INFORME */
+.inf-row{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}
+.inf-lbl{font-size:.68rem;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px}
+.inf-val{font-size:.84rem;color:var(--txt);line-height:1.5;white-space:pre-wrap}
+
+/* POPOVER */
+.eye-pop{position:fixed;background:var(--surf);border:1.5px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(13,71,161,.2);padding:12px 14px;z-index:2000;min-width:200px;display:none}
+.eye-pop.open{display:block}
+.eye-pop-title{font-size:.78rem;font-weight:700;color:var(--p);margin-bottom:8px}
+.eye-pop-states{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.eye-pop-btn{padding:4px 10px;border-radius:10px;border:1.5px solid transparent;font-size:.72rem;font-weight:700;cursor:pointer;transition:.15s}
+.eye-pop-btn.sel{border-color:var(--p);transform:scale(1.08)}
+.eye-pop-close{width:100%;padding:5px;background:#EEF2F7;border:none;border-radius:5px;font-size:.76rem;font-weight:700;cursor:pointer;color:var(--txt2)}
+.eye-pop-close:hover{background:#BBDEFB;color:var(--p)}
+
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+th{background:#E3F2FD;color:var(--p);padding:6px 8px;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.3px}
+td{padding:6px 8px;border-bottom:1px solid #EEF2F7}
+tr:last-child td{border-bottom:none}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-info">
+    <h1>🫀 EcoEstrés Dashboard</h1>
+    <span class="hdr-sub">Protocolo ABCD-FLPR · AHA 17 segmentos · WMSI</span>
+  </div>
+  <div class="hdr-right" id="clock"></div>
+</header>
+
+<div class="main-grid">
+
+  <!-- COLUMNA IZQUIERDA: Datos del paciente + acciones -->
+  <div style="display:flex;flex-direction:column;gap:14px">
+
+    <!-- Datos del paciente -->
+    <div class="card">
+      <div class="card-hdr">👤 Datos del Paciente</div>
+      <div class="card-body">
+        <div class="fg"><label>Nombre completo</label><input type="text" id="p-name" placeholder="Ej. Juan García"></div>
+        <div class="row2">
+          <div class="fg"><label>Edad</label><input type="number" id="p-age" min="1" max="120" placeholder="58"></div>
+          <div class="fg"><label>Sexo</label><select id="p-sex"><option value="M">Masculino</option><option value="F">Femenino</option></select></div>
+        </div>
+        <div class="row2">
+          <div class="fg"><label>Peso (kg)</label><input type="number" id="p-peso" placeholder="70"></div>
+          <div class="fg"><label>Talla (cm)</label><input type="number" id="p-talla" placeholder="170"></div>
+        </div>
+        <div class="fg"><label>Indicación</label><select id="p-ind">
+          <option value="">Seleccionar…</option>
+          <option>Diagnóstico de EC</option>
+          <option>Evaluación pronóstica EC conocida</option>
+          <option>Viabilidad miocárdica</option>
+          <option>Evaluación preoperatoria</option>
+          <option>Evaluación de valvulopatía</option>
+          <option>Cardiopatía isquémica — seguimiento</option>
+          <option>Otra</option>
+        </select></div>
+        <div class="fg"><label>Tipo de estrés</label><select id="p-estres">
+          <option value="ejercicio">Ejercicio (treadmill/bicicleta)</option>
+          <option value="dobutamina">Dobutamina</option>
+          <option value="dipiridamol">Dipiridamol</option>
+          <option value="adenosina">Adenosina</option>
+        </select></div>
+        <div class="fg"><label>Fecha del estudio</label><input type="date" id="p-fecha"></div>
+        <div class="fg"><label>Médico responsable</label><input type="text" id="p-medico" placeholder="Dr."></div>
+      </div>
+    </div>
+
+    <!-- Parámetros basales -->
+    <div class="card">
+      <div class="card-hdr">📊 Parámetros Basales</div>
+      <div class="card-body">
+        <div class="row2">
+          <div class="fg"><label>FC basal (lpm)</label><input type="number" id="b-fc" placeholder="70"></div>
+          <div class="fg"><label>PA basal (mmHg)</label><input type="text" id="b-pa" placeholder="120/80"></div>
+        </div>
+        <div class="row2">
+          <div class="fg"><label>FC máxima alcanzada</label><input type="number" id="b-fcmax" placeholder="150" oninput="calcFCPct()"></div>
+          <div class="fg"><label>FC máxima teórica</label><input type="number" id="b-fcteo" placeholder="162" readonly style="background:#F5F9FF"></div>
+        </div>
+        <div class="fg"><label>% FC máxima teórica</label>
+          <div id="fc-pct-bar" style="height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:4px">
+            <div id="fc-pct-fill" style="height:100%;background:var(--p);border-radius:4px;width:0%;transition:width .4s ease"></div>
+          </div>
+          <span id="fc-pct-val" style="font-size:.78rem;color:var(--p);font-weight:700;margin-top:3px">—</span>
+        </div>
+        <div class="row2">
+          <div class="fg"><label>PA pico (mmHg)</label><input type="text" id="b-papico" placeholder="180/90"></div>
+          <div class="fg"><label>MET alcanzados</label><input type="number" id="b-mets" step="0.5" placeholder="8.5"></div>
+        </div>
+        <div class="fg"><label>Duración del estrés (min)</label><input type="number" id="b-dur" placeholder="8"></div>
+        <div class="fg"><label>Motivo de suspensión</label><select id="b-stop">
+          <option value="">Seleccionar…</option>
+          <option>Protocolo completado</option>
+          <option>FC objetivo alcanzada</option>
+          <option>Angina</option>
+          <option>Cambios ECG significativos</option>
+          <option>Hipotensión</option>
+          <option>Fatiga del paciente</option>
+          <option>Arritmia</option>
+          <option>Decisión médica</option>
+        </select></div>
+      </div>
+    </div>
+
+    <!-- Resultado global -->
+    <div class="card">
+      <div class="card-hdr">✅ Resultado del Estudio</div>
+      <div class="card-body">
+        <div class="fg"><label>Resultado</label><select id="res-global" onchange="updateResult()">
+          <option value="">Seleccionar…</option>
+          <option value="neg">Negativo para isquemia</option>
+          <option value="pos">Positivo para isquemia</option>
+          <option value="inc">Indeterminado / No concluyente</option>
+          <option value="via">Viabilidad presente</option>
+          <option value="novia">Sin viabilidad</option>
+        </select></div>
+        <div id="res-box" class="result-box"></div>
+        <div class="fg" style="margin-top:10px"><label>Comentario adicional</label><textarea id="res-comment" placeholder="Observaciones clínicas…"></textarea></div>
+        <div class="btn-row">
+          <button class="btn btn-g" onclick="exportPDF()">📄 Exportar informe PDF</button>
+          <button class="btn btn-ghost" onclick="resetAll()">↺ Nuevo estudio</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- COLUMNA DERECHA: Tabs -->
+  <div style="display:flex;flex-direction:column;gap:14px">
+
+    <div class="card">
+      <div class="card-body">
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab('protocolo',this)">📋 Protocolo ABCD-FLPR</button>
+          <button class="tab" onclick="switchTab('bullo',this)">🎯 Bull's Eye 17 seg</button>
+          <button class="tab" onclick="switchTab('ecg',this)">⚡ ECG / Arritmias</button>
+          <button class="tab" onclick="switchTab('cfvr',this)">🩸 CFVR / Strain</button>
+        </div>
+
+        <!-- TAB PROTOCOLO -->
+        <div id="tab-protocolo" class="tab-content active">
+
+          <!-- A -->
+          <div class="proto-step">
+            <div class="proto-step-hdr" onclick="toggleStep(this)">
+              <span>A — Adecuación del estrés</span><span>▼</span>
+            </div>
+            <div class="proto-step-body">
+              <div class="row2" style="margin-bottom:10px">
+                <div class="fg"><label>FC objetivo (85% FC max teórica)</label><input type="text" id="a-fcobj" readonly style="background:#F5F9FF"></div>
+                <div class="fg"><label>Dosis dobutamina (si aplica)</label><input type="text" id="a-dosis" placeholder="40 mcg/kg/min"></div>
+              </div>
+              <div style="font-size:.78rem;font-weight:700;color:var(--p);margin-bottom:6px">Criterios de adecuación:</div>
+              <span class="proto-pill pp-b">FC ≥85% de la máxima teórica</span>
+              <span class="proto-pill pp-b">Dobutamina ≥40 mcg/kg/min</span>
+              <span class="proto-pill pp-b">Dipiridamol 0.84 mg/kg en 10 min</span>
+              <span class="proto-pill pp-b">Adenosina 140 mcg/kg/min</span>
+              <div class="proto-nota">FC máxima teórica = 220 − edad. Objetivo: ≥85% = adecuación del estrés. Con dobutamina se puede agregar atropina hasta 1mg si no alcanza FC objetivo.</div>
+              <div class="fg" style="margin-top:8px"><label>¿Estrés adecuado?</label><select id="a-adec">
+                <option value="">—</option>
+                <option value="si">Sí</option>
+                <option value="no">No — estudio subóptimo</option>
+              </select></div>
+            </div>
+          </div>
+
+          <!-- B -->
+          <div class="proto-step">
+            <div class="proto-step-hdr" onclick="toggleStep(this)">
+              <span>B — Bloqueo de la vía accesoria / Base de datos ECG</span><span>▼</span>
+            </div>
+            <div class="proto-step-body">
+              <div style="font-size:.78rem;font-weight:700;color:var(--p);margin-bottom:6px">ECG basal y durante el estrés:</div>
+              <div class="fg"><label>ECG basal</label><select id="b-ecg">
+                <option value="normal">Normal</option>
+                <option value="bri">BRI</option>
+                <option value="brd">BRD</option>
+                <option value="hvi">HVI</option>
+                <option value="st">Cambios ST basales</option>
+                <option value="otro">Otro</option>
+              </select></div>
+              <div class="fg"><label>Cambios ECG durante estrés</label><select id="b-cambios">
+                <option value="no">Sin cambios significativos</option>
+                <option value="st-dep">Depresión ST ≥1mm horizontal/descendente</option>
+                <option value="st-ele">Elevación ST ≥1mm (sin BRI/aVR)</option>
+                <option value="arritmia">Arritmia significativa</option>
+                <option value="bri-func">BRI funcional</option>
+              </select></div>
+              <div class="fg"><label>Descripción ECG</label><textarea id="b-ecg-desc" placeholder="Descripción detallada del ECG…" rows="2"></textarea></div>
+              <div class="proto-warn">BRI durante el estrés: considerar origen funcional (FC-dependiente) vs isquémico. BRI a FC &lt;125 lpm sugiere origen isquémico (art. DA).</div>
+            </div>
+          </div>
+
+          <!-- C -->
+          <div class="proto-step">
+            <div class="proto-step-hdr" onclick="toggleStep(this)">
+              <span>C — Contractilidad (Motilidad parietal)</span><span>▼</span>
+            </div>
+            <div class="proto-step-body">
+              <div style="font-size:.78rem;color:var(--txt2);margin-bottom:8px">Completar en el tab "Bull's Eye 17 seg" →</div>
+              <table>
+                <tr><th>Parámetro</th><th>Basal</th><th>Pico estrés</th><th>Recuperación</th></tr>
+                <tr><td>Motilidad global</td><td><select id="c-mot-bas"><option>Normal</option><option>Hipokinesia difusa</option><option>Alterada</option></select></td><td><select id="c-mot-pic"><option>Normal</option><option>Hipokinesia nueva</option><option>Empeora</option><option>Mejora (viabilidad)</option></select></td><td><select id="c-mot-rec"><option>Normaliza</option><option>Persiste alterada</option></select></td></tr>
+                <tr><td>FEVI estimada (%)</td><td><input type="number" id="c-fevi-bas" placeholder="55" style="width:70px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-size:.78rem"></td><td><input type="number" id="c-fevi-pic" placeholder="65" style="width:70px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-size:.78rem"></td><td><input type="number" id="c-fevi-rec" placeholder="55" style="width:70px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-size:.78rem"></td></tr>
+                <tr><td>Dilatación VI</td><td colspan="3"><select id="c-dilat"><option value="no">No</option><option value="si">Sí — signo de isquemia severa</option></select></td></tr>
+              </table>
+              <div class="proto-nota" style="margin-top:8px">Respuesta isquémica: nueva alteración de la motilidad parietal en ≥2 segmentos adyacentes o empeoramiento de alteración preexistente. Respuesta de viabilidad: mejoría de segmentos hipoquinéticos/aquinéticos con dosis bajas de dobutamina (5-10 mcg/kg/min).</div>
+            </div>
+          </div>
+
+          <!-- D -->
+          <div class="proto-step">
+            <div class="proto-step-hdr" onclick="toggleStep(this)">
+              <span>D — Dilatación del VI y otros signos</span><span>▼</span>
+            </div>
+            <div class="proto-step-body">
+              <div class="fg"><label>Dilatación transitoria del VI durante estrés</label><select id="d-dilat">
+                <option value="no">No presente</option>
+                <option value="si">Presente — indicador de isquemia extensa/multivaso</option>
+              </select></div>
+              <div class="fg"><label>Respuesta de PA al estrés</label><select id="d-pa">
+                <option value="normal">Normal (↑ sistólica &gt;10mmHg)</option>
+                <option value="hipo">Hipotensión (&gt;10mmHg de caída) — signo ominoso</option>
+                <option value="insuf">Respuesta insuficiente</option>
+                <option value="hipert">Respuesta hipertensiva excesiva</option>
+              </select></div>
+              <div class="fg"><label>Insuficiencia mitral inducida</label><select id="d-im">
+                <option value="no">No</option>
+                <option value="leve">Leve</option>
+                <option value="mod">Moderada — buscar isquemia o disfunción papilar</option>
+                <option value="sev">Severa</option>
+              </select></div>
+              <div class="proto-warn">Hipotensión durante el estrés = caída &gt;10mmHg de la PAS basal. Es un signo de alto riesgo que obliga a suspender el estudio inmediatamente.</div>
+            </div>
+          </div>
+
+          <!-- F -->
+          <div class="proto-step">
+            <div class="proto-step-hdr" onclick="toggleStep(this)">
+              <span>F — Flujo coronario (CFVR)</span><span>▼</span>
+            </div>
+            <div class="proto-step-body">
+              <div class="fg"><label>CFVR (Coronary Flow Velocity Reserve)</label><input type="number" id="f-cfvr" step="0.1" placeholder="2.5" oninput="evalCFVR()"></div>
+              <div id="f-cfvr-res" style="font-size:.78rem;margin-top:4px;font-weight:600"></div>
+              <div class="proto-nota">CFVR normal: ≥2.0. CFVR &lt;2.0 sugiere reserva coronaria reducida. Se mide con Doppler pulsado en la arteria DA distal con adenosina o dipiridamol. Útil en sospecha de enfermedad microvascular.</div>
+              <div class="fg" style="margin-top:8px"><label>Arteria evaluada</label><select id="f-art">
+                <option>DA (descendente anterior)</option>
+                <option>CD (coronaria derecha)</option>
+                <option>Cx (circunfleja)</option>
+              </select></div>
+            </div>
+          </div>
+
+          <!-- L -->
+          <div class="proto-step">
+            <div class="proto-step-hdr" onclick="toggleStep(this)">
+              <span>L — Lung B-lines (Líneas B pulmonares)</span><span>▼</span>
+            </div>
+            <div class="proto-step-body">
+              <div class="fg"><label>Líneas B basales</label><select id="l-bas">
+                <option value="0">0 — Normal</option>
+                <option value="1">1-2 por campo — Borderline</option>
+                <option value="2">≥3 por campo — Congestión</option>
+              </select></div>
+              <div class="fg"><label>Líneas B post-estrés</label><select id="l-post">
+                <option value="0">0 — Normal</option>
+                <option value="1">1-2 por campo — Leve aumento</option>
+                <option value="2">≥3 por campo — Congestión significativa</option>
+              </select></div>
+              <div class="fg"><label>Zonas evaluadas</label><input type="text" id="l-zonas" placeholder="Ej. 4 zonas anteriores bilaterales"></div>
+              <div class="proto-nota">Protocolo de 4 u 8 zonas. El aumento de líneas B post-estrés ≥3/campo indica hipertensión venocapilar inducida por el esfuerzo — sugiere disfunción diastólica o isquemia con falla del VI.</div>
+            </div>
+          </div>
+
+          <!-- P -->
+          <div class="proto-step">
+            <div class="proto-step-hdr" onclick="toggleStep(this)">
+              <span>P — Presión (Estimación hemodinámica)</span><span>▼</span>
+            </div>
+            <div class="proto-step-body">
+              <div class="row2">
+                <div class="fg"><label>PSAP basal (mmHg)</label><input type="number" id="p-psap-bas" placeholder="30"></div>
+                <div class="fg"><label>PSAP pico (mmHg)</label><input type="number" id="p-psap-pic" placeholder="35" oninput="evalPSAP()"></div>
+              </div>
+              <div id="p-psap-res" style="font-size:.78rem;margin-top:4px;font-weight:600"></div>
+              <div class="fg"><label>Patrón de llenado diastólico basal</label><select id="p-diast">
+                <option value="normal">Normal</option>
+                <option value="gr1">Grado I — Relajación alterada</option>
+                <option value="gr2">Grado II — Pseudonormal</option>
+                <option value="gr3">Grado III — Restrictivo</option>
+              </select></div>
+              <div class="fg"><label>E/e' basal</label><input type="number" id="p-ee" step="0.1" placeholder="8.5" oninput="evalEE()"></div>
+              <div id="p-ee-res" style="font-size:.78rem;margin-top:4px;font-weight:600"></div>
+              <div class="proto-nota">PSAP pico &gt;60mmHg o aumento &gt;20mmHg sobre el basal durante estrés = HTP inducida. E/e' &gt;14 sugiere PCP elevada.</div>
+            </div>
+          </div>
+
+          <!-- R -->
+          <div class="proto-step">
+            <div class="proto-step-hdr" onclick="toggleStep(this)">
+              <span>R — Recuperación</span><span>▼</span>
+            </div>
+            <div class="proto-step-body">
+              <div class="fg"><label>Tiempo de recuperación de la motilidad (min)</label><input type="number" id="r-trecup" step="0.5" placeholder="3"></div>
+              <div class="fg"><label>FC a los 3 min de recuperación</label><input type="number" id="r-fc3" placeholder="90"></div>
+              <div class="fg"><label>Síntomas en recuperación</label><select id="r-sint">
+                <option value="no">Sin síntomas</option>
+                <option value="angina">Angina</option>
+                <option value="disnea">Disnea</option>
+                <option value="arritmia">Arritmia</option>
+              </select></div>
+              <div class="proto-nota">La recuperación tardía (&gt;3 min) de alteraciones de la motilidad sugiere isquemia severa. La persistencia en reposo puede indicar necrosis o aturdimiento miocárdico.</div>
+            </div>
+          </div>
+
+        </div><!-- end protocolo -->
+
+        <!-- TAB BULL'S EYE -->
+        <div id="tab-bullo" class="tab-content">
+          <div class="tabs" style="margin-bottom:10px">
+            <button class="tab active" onclick="switchBullTab('basal',this)">Basal</button>
+            <button class="tab" onclick="switchBullTab('pico',this)">Pico estrés</button>
+            <button class="tab" onclick="switchBullTab('recup',this)">Recuperación</button>
+          </div>
+
+          <div id="bull-basal" class="eye-wrap">
+            <div class="eye-legend">
+              <div class="eye-leg-item"><div class="eye-leg-dot" style="background:#4CAF50"></div>Normal</div>
+              <div class="eye-leg-item"><div class="eye-leg-dot" style="background:#FFC107"></div>Hipokinesia</div>
+              <div class="eye-leg-item"><div class="eye-leg-dot" style="background:#FF5722"></div>Akinesia</div>
+              <div class="eye-leg-item"><div class="eye-leg-dot" style="background:#9C27B0"></div>Diskinesia</div>
+              <div class="eye-leg-item"><div class="eye-leg-dot" style="background:#90A4AE"></div>No eval.</div>
+            </div>
+            <div style="font-size:.72rem;color:var(--txt2);text-align:center">Click = ciclar · Click derecho = editar</div>
+            <svg id="eye-svg-basal" viewBox="0 0 340 340" width="300" height="300" style="cursor:pointer;flex-shrink:0"></svg>
+            <div class="eye-wmsi-box">
+              <div class="eye-wmsi-lbl">WMSI Basal</div>
+              <div class="eye-wmsi-val" id="wmsi-basal">—</div>
+              <div class="eye-wmsi-cat" id="wmsi-basal-cat"></div>
+            </div>
+          </div>
+
+          <div id="bull-pico" class="eye-wrap" style="display:none">
+            <div class="eye-legend">
+              <div class="eye-leg-item"><div class="eye-leg-dot" style="background:#4CAF50"></div>Normal</div>
+              <div class="eye-leg-item"><div class="eye-leg-dot" style="background:#FFC107"></div>Hipokinesia</div>
+              <div class="eye-leg-item"><div class="eye-leg-dot" style="background:#FF5722"></div>Akinesia</div>
+              <div class="eye-leg-item"><div class="eye-leg-dot" style="background:#9C27B0"></div>Diskinesia</div>
+              <div class="eye-leg-item"><div class="eye-leg-dot" style="background:#90A4AE"></div>No eval.</div>
+            </div>
+            <div style="font-size:.72rem;color:var(--txt2);text-align:center">Click = ciclar · Click derecho = editar</div>
+            <svg id="eye-svg-pico" viewBox="0 0 340 340" width="300" height="300" style="cursor:pointer;flex-shrink:0"></svg>
+            <div class="eye-wmsi-box">
+              <div class="eye-wmsi-lbl">WMSI Pico estrés</div>
+              <div class="eye-wmsi-val" id="wmsi-pico">—</div>
+              <div class="eye-wmsi-cat" id="wmsi-pico-cat"></div>
+            </div>
+          </div>
+
+          <div id="bull-recup" class="eye-wrap" style="display:none">
+            <div class="eye-legend">
+              <div class="eye-leg-item"><div class="eye-leg-dot" style="background:#4CAF50"></div>Normal</div>
+              <div class="eye-leg-item"><div class="eye-leg-dot" style="background:#FFC107"></div>Hipokinesia</div>
+              <div class="eye-leg-item"><div class="eye-leg-dot" style="background:#FF5722"></div>Akinesia</div>
+              <div class="eye-leg-item"><div class="eye-leg-dot" style="background:#9C27B0"></div>Diskinesia</div>
+              <div class="eye-leg-item"><div class="eye-leg-dot" style="background:#90A4AE"></div>No eval.</div>
+            </div>
+            <div style="font-size:.72rem;color:var(--txt2);text-align:center">Click = ciclar · Click derecho = editar</div>
+            <svg id="eye-svg-recup" viewBox="0 0 340 340" width="300" height="300" style="cursor:pointer;flex-shrink:0"></svg>
+            <div class="eye-wmsi-box">
+              <div class="eye-wmsi-lbl">WMSI Recuperación</div>
+              <div class="eye-wmsi-val" id="wmsi-recup">—</div>
+              <div class="eye-wmsi-cat" id="wmsi-recup-cat"></div>
+            </div>
+          </div>
+
+          <div class="btn-row" style="justify-content:center;margin-top:8px">
+            <button class="btn btn-ghost" onclick="resetBull('basal')">↺ Reiniciar basal</button>
+            <button class="btn btn-ghost" onclick="resetBull('pico')">↺ Reiniciar pico</button>
+            <button class="btn btn-ghost" onclick="resetBull('recup')">↺ Reiniciar recup.</button>
+          </div>
+        </div>
+
+        <!-- TAB ECG -->
+        <div id="tab-ecg" class="tab-content">
+          <div style="font-size:.8rem;font-weight:700;color:var(--p);margin-bottom:10px">📋 Registro de ECG durante el estudio</div>
+          <table style="margin-bottom:12px">
+            <tr><th>Etapa</th><th>FC (lpm)</th><th>Ritmo</th><th>ST</th><th>Comentario</th></tr>
+            <tr>
+              <td>Basal</td>
+              <td><input type="number" id="ecg-fc-bas" placeholder="70" style="width:60px;padding:3px;border:1px solid var(--border);border-radius:4px;font-size:.76rem"></td>
+              <td><select id="ecg-rit-bas" style="font-size:.76rem;padding:3px;border:1px solid var(--border);border-radius:4px"><option>Sinusal</option><option>FA</option><option>Flutter</option><option>Otro</option></select></td>
+              <td><select id="ecg-st-bas" style="font-size:.76rem;padding:3px;border:1px solid var(--border);border-radius:4px"><option>Normal</option><option>Depresión</option><option>Elevación</option><option>Inespecífico</option></select></td>
+              <td><input type="text" id="ecg-com-bas" placeholder="…" style="width:100%;padding:3px;border:1px solid var(--border);border-radius:4px;font-size:.76rem"></td>
+            </tr>
+            <tr>
+              <td>Pico</td>
+              <td><input type="number" id="ecg-fc-pic" placeholder="150" style="width:60px;padding:3px;border:1px solid var(--border);border-radius:4px;font-size:.76rem"></td>
+              <td><select id="ecg-rit-pic" style="font-size:.76rem;padding:3px;border:1px solid var(--border);border-radius:4px"><option>Sinusal</option><option>FA</option><option>Flutter</option><option>TV</option><option>Otro</option></select></td>
+              <td><select id="ecg-st-pic" style="font-size:.76rem;padding:3px;border:1px solid var(--border);border-radius:4px"><option>Normal</option><option>Depresión</option><option>Elevación</option><option>Inespecífico</option></select></td>
+              <td><input type="text" id="ecg-com-pic" placeholder="…" style="width:100%;padding:3px;border:1px solid var(--border);border-radius:4px;font-size:.76rem"></td>
+            </tr>
+            <tr>
+              <td>Recuperación</td>
+              <td><input type="number" id="ecg-fc-rec" placeholder="80" style="width:60px;padding:3px;border:1px solid var(--border);border-radius:4px;font-size:.76rem"></td>
+              <td><select id="ecg-rit-rec" style="font-size:.76nm;padding:3px;border:1px solid var(--border);border-radius:4px"><option>Sinusal</option><option>FA</option><option>Otro</option></select></td>
+              <td><select id="ecg-st-rec" style="font-size:.76rem;padding:3px;border:1px solid var(--border);border-radius:4px"><option>Normal</option><option>Depresión persiste</option><option>Normaliza</option></select></td>
+              <td><input type="text" id="ecg-com-rec" placeholder="…" style="width:100%;padding:3px;border:1px solid var(--border);border-radius:4px;font-size:.76rem"></td>
+            </tr>
+          </table>
+          <div class="fg"><label>Arritmias detectadas</label><textarea id="ecg-arritmias" placeholder="Extrasistolia, TV no sostenida, FA paroxística…" rows="2"></textarea></div>
+        </div>
+
+        <!-- TAB CFVR / STRAIN -->
+        <div id="tab-cfvr" class="tab-content">
+          <div style="font-size:.8rem;font-weight:700;color:var(--p);margin-bottom:10px">🩸 Reserva de Flujo Coronario (CFVR)</div>
+          <table style="margin-bottom:12px">
+            <tr><th>Arteria</th><th>Vel. basal (cm/s)</th><th>Vel. adenosina (cm/s)</th><th>CFVR</th><th>Interpretación</th></tr>
+            <tr>
+              <td>DA</td>
+              <td><input type="number" id="cfvr-da-bas" step="1" placeholder="25" style="width:70px;padding:3px;border:1px solid var(--border);border-radius:4px;font-size:.76rem" oninput="calcCFVR('da')"></td>
+              <td><input type="number" id="cfvr-da-ade" step="1" placeholder="60" style="width:70px;padding:3px;border:1px solid var(--border);border-radius:4px;font-size:.76rem" oninput="calcCFVR('da')"></td>
+              <td id="cfvr-da-val" style="font-weight:700;color:var(--p)">—</td>
+              <td id="cfvr-da-int" style="font-size:.75rem">—</td>
+            </tr>
+            <tr>
+              <td>CD</td>
+              <td><input type="number" id="cfvr-cd-bas" step="1" placeholder="25" style="width:70px;padding:3px;border:1px solid var(--border);border-radius:4px;font-size:.76rem" oninput="calcCFVR('cd')"></td>
+              <td><input type="number" id="cfvr-cd-ade" step="1" placeholder="55" style="width:70px;padding:3px;border:1px solid var(--border);border-radius:4px;font-size:.76rem" oninput="calcCFVR('cd')"></td>
+              <td id="cfvr-cd-val" style="font-weight:700;color:var(--p)">—</td>
+              <td id="cfvr-cd-int" style="font-size:.75rem">—</td>
+            </tr>
+          </table>
+
+          <div style="font-size:.8rem;font-weight:700;color:var(--p);margin:14px 0 8px">📐 GLS — Strain Longitudinal Global</div>
+          <div class="row2">
+            <div class="fg"><label>GLS basal (%)</label><input type="number" id="gls-bas" step="0.1" placeholder="-20" oninput="evalGLS()"></div>
+            <div class="fg"><label>GLS pico (%)</label><input type="number" id="gls-pic" step="0.1" placeholder="-22" oninput="evalGLS()"></div>
+          </div>
+          <div id="gls-res" style="font-size:.78rem;margin-top:4px;font-weight:600"></div>
+          <div class="proto-nota" style="margin-top:8px">GLS normal: ≤ −20%. GLS entre −16% y −20%: zona gris. GLS &gt; −16%: disfunción sistólica subclínica. El aumento del GLS &gt;2% con el estrés es respuesta normal.</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Popover bull's eye -->
+<div class="eye-pop" id="eye-pop">
+  <div class="eye-pop-title" id="eye-pop-title">Segmento</div>
+  <div class="eye-pop-states" id="eye-pop-states"></div>
+  <button class="eye-pop-close" onclick="closeEyePop()">✓ Listo</button>
+</div>
+
+<script>
+// ── CLOCK ────────────────────────────────────────────────────────
+function clock(){
+  const n=new Date(),pad=x=>x.toString().padStart(2,'0');
+  const mo=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  document.getElementById('clock').innerHTML=`${mo[n.getMonth()]} ${n.getDate()}, ${n.getFullYear()}<br>${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+}
+setInterval(clock,1000);clock();
+
+// ── TABS ──────────────────────────────────────────────────────────
+function switchTab(id,el){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  el.classList.add('active');
+  if(id==='bullo'){initAllBulls();}
+}
+
+function switchBullTab(id,el){
+  ['basal','pico','recup'].forEach(b=>{
+    document.getElementById('bull-'+b).style.display=b===id?'flex':'none';
+  });
+  document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ── PROTOCOLO ─────────────────────────────────────────────────────
+function toggleStep(hdr){
+  const body=hdr.nextElementSibling;
+  const isOpen=body.classList.contains('open');
+  body.classList.toggle('open');
+  hdr.querySelector('span:last-child').textContent=isOpen?'▼':'▲';
+}
+
+// ── FC CÁLCULOS ───────────────────────────────────────────────────
+document.getElementById('p-age').addEventListener('input',function(){
+  const age=+this.value;
+  if(age>0){
+    const fcmax=220-age;
+    document.getElementById('b-fcteo').value=fcmax;
+    document.getElementById('a-fcobj').value=Math.round(fcmax*0.85);
+    calcFCPct();
+  }
+});
+
+function calcFCPct(){
+  const fcteo=+document.getElementById('b-fcteo').value;
+  const fcmax=+document.getElementById('b-fcmax').value;
+  if(!fcteo||!fcmax)return;
+  const pct=Math.round(fcmax/fcteo*100);
+  document.getElementById('fc-pct-fill').style.width=Math.min(pct,100)+'%';
+  document.getElementById('fc-pct-fill').style.background=pct>=85?'#2E7D32':pct>=75?'#F9A825':'#C62828';
+  document.getElementById('fc-pct-val').textContent=pct+'% de FC máxima teórica';
+  document.getElementById('fc-pct-val').style.color=pct>=85?'#2E7D32':pct>=75?'#F9A825':'#C62828';
+}
+
+// ── EVALUACIONES ──────────────────────────────────────────────────
+function evalCFVR(){
+  const v=+document.getElementById('f-cfvr').value;
+  const el=document.getElementById('f-cfvr-res');
+  if(!v){el.textContent='';return;}
+  if(v>=2.5){el.style.color='#2E7D32';el.textContent='✅ Normal (≥2.5)';}
+  else if(v>=2.0){el.style.color='#F9A825';el.textContent='⚠️ Borderline (2.0–2.5)';}
+  else{el.style.color='#C62828';el.textContent='❌ Reducida (<2.0) — sugiere enfermedad microvascular o estenosis significativa';}
+}
+
+function evalPSAP(){
+  const v=+document.getElementById('p-psap-pic').value;
+  const el=document.getElementById('p-psap-res');
+  if(!v){el.textContent='';return;}
+  if(v>60){el.style.color='#C62828';el.textContent='❌ HTP inducida por estrés (>60mmHg)';}
+  else if(v>50){el.style.color='#F9A825';el.textContent='⚠️ Elevación significativa (>50mmHg)';}
+  else{el.style.color='#2E7D32';el.textContent='✅ Normal (<50mmHg)';}
+}
+
+function evalEE(){
+  const v=+document.getElementById('p-ee').value;
+  const el=document.getElementById('p-ee-res');
+  if(!v){el.textContent='';return;}
+  if(v>14){el.style.color='#C62828';el.textContent='❌ E/e\' elevado (>14) — PCP probablemente elevada';}
+  else if(v>10){el.style.color='#F9A825';el.textContent='⚠️ E/e\' borderline (10–14)';}
+  else{el.style.color='#2E7D32';el.textContent='✅ E/e\' normal (<10)';}
+}
+
+function evalGLS(){
+  const bas=+document.getElementById('gls-bas').value;
+  const pic=+document.getElementById('gls-pic').value;
+  const el=document.getElementById('gls-res');
+  if(!bas){el.textContent='';return;}
+  let txt='';
+  if(bas>-16)txt='❌ GLS basal reducido (>−16%) — disfunción sistólica subclínica';
+  else if(bas>-20)txt='⚠️ GLS basal borderline (−16% a −20%)';
+  else txt='✅ GLS basal normal (≤−20%)';
+  if(pic){
+    const delta=Math.abs(pic)-Math.abs(bas);
+    txt+=delta>2?' · ✅ Reserva de strain presente':' · ⚠️ Sin reserva de strain';
+  }
+  el.textContent=txt;
+  el.style.color=bas<=-20?'#2E7D32':bas<=-16?'#F9A825':'#C62828';
+}
+
+function calcCFVR(art){
+  const bas=+document.getElementById(`cfvr-${art}-bas`).value;
+  const ade=+document.getElementById(`cfvr-${art}-ade`).value;
+  if(!bas||!ade)return;
+  const cfvr=(ade/bas).toFixed(2);
+  document.getElementById(`cfvr-${art}-val`).textContent=cfvr;
+  const int=document.getElementById(`cfvr-${art}-int`);
+  if(+cfvr>=2.5){int.style.color='#2E7D32';int.textContent='Normal';}
+  else if(+cfvr>=2.0){int.style.color='#F9A825';int.textContent='Borderline';}
+  else{int.style.color='#C62828';int.textContent='Reducida';}
+}
+
+// ── RESULTADO GLOBAL ──────────────────────────────────────────────
+function updateResult(){
+  const v=document.getElementById('res-global').value;
+  const box=document.getElementById('res-box');
+  const msgs={
+    neg:{cls:'rb-neg',txt:'✅ Estudio negativo para isquemia inducible. Bajo riesgo de eventos cardiovasculares mayores a corto plazo.'},
+    pos:{cls:'rb-pos',txt:'❌ Estudio positivo para isquemia. Se recomienda correlación con coronariografía y evaluación por cardiología intervencionista.'},
+    inc:{cls:'rb-inc',txt:'⚠️ Estudio indeterminado o no concluyente. Considerar repetir con protocolo alternativo o escalar a coronariografía según clínica.'},
+    via:{cls:'rb-neg',txt:'✅ Viabilidad miocárdica presente. Segmentos con mejoría con dosis bajas de dobutamina. Beneficio potencial de revascularización.'},
+    novia:{cls:'rb-pos',txt:'❌ Sin evidencia de viabilidad miocárdica. Bajo beneficio esperado de revascularización en los segmentos evaluados.'}
+  };
+  if(msgs[v]){
+    box.className='result-box show '+msgs[v].cls;
+    box.textContent=msgs[v].txt;
+  } else {
+    box.className='result-box';
+  }
+}
+
+// ── BULL'S EYE ────────────────────────────────────────────────────
+const EYE_SEGS=[
+  {id:1,name:'Anterior basal',ter:'LAD'},{id:2,name:'Anteroseptal basal',ter:'LAD'},
+  {id:3,name:'Inferoseptal basal',ter:'RCA'},{id:4,name:'Inferior basal',ter:'RCA'},
+  {id:5,name:'Inferolateral basal',ter:'RCA',ter2:'LCx'},{id:6,name:'Anterolateral basal',ter:'LCx'},
+  {id:7,name:'Anterior medio',ter:'LAD'},{id:8,name:'Anteroseptal medio',ter:'LAD'},
+  {id:9,name:'Inferoseptal medio',ter:'RCA'},{id:10,name:'Inferior medio',ter:'RCA'},
+  {id:11,name:'Inferolateral medio',ter:'RCA',ter2:'LCx'},{id:12,name:'Anterolateral medio',ter:'LCx',ter2:'LAD'},
+  {id:13,name:'Anterior apical',ter:'LAD'},{id:14,name:'Septal apical',ter:'LAD'},
+  {id:15,name:'Inferior apical',ter:'RCA',ter2:'LAD'},{id:16,name:'Lateral apical',ter:'LCx'},
+  {id:17,name:'Apex',ter:'LAD'}
+];
+const EYE_LABELS=['Normal','Hipokinesia','Akinesia','Diskinesia','No eval.'];
+const EYE_SCORES=[1,2,3,4,0];
+const EYE_COLORS=['#4CAF50','#FFC107','#FF5722','#9C27B0','#90A4AE'];
+const TER_COLORS={LAD:'#1565C0',RCA:'#C62828',LCx:'#2E7D32'};
+
+let bullState={basal:Array(17).fill(0),pico:Array(17).fill(0),recup:Array(17).fill(0)};
+let bullInited={basal:false,pico:false,recup:false};
+let eyePopPhase=null,eyePopIdx=-1;
+
+function initAllBulls(){
+  ['basal','pico','recup'].forEach(phase=>{
+    if(!bullInited[phase]){bullInited[phase]=true;renderBull(phase);}
+  });
+}
+
+function eyeArcPath(cx,cy,r1,r2,s,e){
+  const rs=s*Math.PI/180,re=e*Math.PI/180;
+  const x1=cx+r1*Math.cos(rs),y1=cy+r1*Math.sin(rs);
+  const x2=cx+r1*Math.cos(re),y2=cy+r1*Math.sin(re);
+  const x3=cx+r2*Math.cos(re),y3=cy+r2*Math.sin(re);
+  const x4=cx+r2*Math.cos(rs),y4=cy+r2*Math.sin(rs);
+  const large=Math.abs(e-s)>180?1:0;
+  const sweep=e<s?0:1;
+  return `M${x1},${y1} A${r1},${r1} 0 ${large},${sweep} ${x2},${y2} L${x3},${y3} A${r2},${r2} 0 ${large},${sweep?0:1} ${x4},${y4} Z`;
+}
+
+function renderBull(phase){
+  const svg=document.getElementById('eye-svg-'+phase);
+  if(!svg)return;
+  const cx=170,cy=170,state=bullState[phase];
+  const rings=[
+    {r1:130,r2:92,segs:[0,1,2,3,4,5],step:60},
+    {r1:92,r2:54,segs:[6,7,8,9,10,11],step:60},
+    {r1:54,r2:24,segs:[12,13,14,15],step:90},
+  ];
+  let html='';
+  rings.forEach(ring=>{
+    ring.segs.forEach((segIdx,s)=>{
+      const seg=EYE_SEGS[segIdx];
+      const startDeg=-90+30-(s*ring.step);
+      const endDeg=startDeg-ring.step;
+      const midDeg=startDeg-ring.step/2;
+      const midR=(ring.r1+ring.r2)/2;
+      const lx=cx+midR*Math.cos(midDeg*Math.PI/180);
+      const ly=cy+midR*Math.sin(midDeg*Math.PI/180);
+      const color=EYE_COLORS[state[segIdx]];
+      html+=`<path d="${eyeArcPath(cx,cy,ring.r1,ring.r2,startDeg,endDeg)}" fill="${color}" fill-opacity="0.85" stroke="#fff" stroke-width="2"
+        onclick="cycleBull('${phase}',${segIdx})"
+        oncontextmenu="openBullPop(event,'${phase}',${segIdx});return false;"
+        style="cursor:pointer;transition:fill .2s">
+        <title>Seg ${seg.id} ${seg.name} (${seg.ter}) — ${EYE_LABELS[state[segIdx]]}</title></path>`;
+      html+=`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="9" fill="#fff" font-weight="700" pointer-events="none">${seg.id}</text>`;
+    });
+  });
+  // Apex
+  html+=`<circle cx="${cx}" cy="${cy}" r="24" fill="${EYE_COLORS[state[16]]}" fill-opacity="0.85" stroke="#fff" stroke-width="2"
+    onclick="cycleBull('${phase}',16)"
+    oncontextmenu="openBullPop(event,'${phase}',16);return false;"
+    style="cursor:pointer;transition:fill .2s">
+    <title>Apex (LAD) — ${EYE_LABELS[state[16]]}</title></circle>`;
+  html+=`<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle" font-size="9" fill="#fff" font-weight="700" pointer-events="none">17</text>`;
+  // Etiquetas
+  html+=`<text x="${cx}" y="26" text-anchor="middle" font-size="9" fill="${TER_COLORS.LAD}" font-weight="800">LAD</text>`;
+  html+=`<text x="315" y="${cy}" text-anchor="end" font-size="9" fill="${TER_COLORS.LCx}" font-weight="800">LCx</text>`;
+  html+=`<text x="25" y="${cy}" text-anchor="start" font-size="9" fill="${TER_COLORS.RCA}" font-weight="800">RCA</text>`;
+  svg.innerHTML=html;
+  updateWMSI(phase);
+}
+
+function cycleBull(phase,idx){
+  bullState[phase][idx]=(bullState[phase][idx]+1)%EYE_LABELS.length;
+  renderBull(phase);
+}
+
+function openBullPop(e,phase,idx){
+  e.preventDefault();
+  eyePopPhase=phase;eyePopIdx=idx;
+  const seg=EYE_SEGS[idx];
+  const pop=document.getElementById('eye-pop');
+  document.getElementById('eye-pop-title').textContent=`Seg ${seg.id} — ${seg.name} (${seg.ter})`;
+  const st=document.getElementById('eye-pop-states');
+  st.innerHTML=EYE_LABELS.map((lbl,i)=>`<button class="eye-pop-btn${bullState[phase][idx]===i?' sel':''}"
+    style="background:${EYE_COLORS[i]}33;color:${EYE_COLORS[i]};border-color:${bullState[phase][idx]===i?EYE_COLORS[i]:'transparent'}"
+    onclick="setBullState('${phase}',${idx},${i})">${lbl}</button>`).join('');
+  const px=Math.min(e.clientX,window.innerWidth-220);
+  const py=Math.min(e.clientY,window.innerHeight-180);
+  pop.style.left=px+'px';pop.style.top=py+'px';
+  pop.classList.add('open');
+}
+
+function setBullState(phase,idx,st){
+  bullState[phase][idx]=st;
+  renderBull(phase);
+  document.querySelectorAll('.eye-pop-btn').forEach((b,i)=>{
+    b.classList.toggle('sel',i===st);
+    b.style.borderColor=i===st?EYE_COLORS[i]:'transparent';
+  });
+}
+
+function closeEyePop(){
+  document.getElementById('eye-pop').classList.remove('open');
+  eyePopPhase=null;eyePopIdx=-1;
+}
+
+function updateWMSI(phase){
+  const state=bullState[phase];
+  let sum=0,count=0;
+  state.forEach(st=>{if(st!==4){sum+=EYE_SCORES[st];count++;}});
+  const wmsi=count>0?(sum/count).toFixed(2):'—';
+  const valEl=document.getElementById('wmsi-'+phase);
+  const catEl=document.getElementById('wmsi-'+phase+'-cat');
+  valEl.textContent=wmsi;
+  if(wmsi==='—'){catEl.textContent='';return;}
+  const w=parseFloat(wmsi);
+  if(w===1){catEl.textContent='Normal';catEl.style.color='#2E7D32';}
+  else if(w<=1.5){catEl.textContent='Disfunción leve';catEl.style.color='#F9A825';}
+  else if(w<=2){catEl.textContent='Disfunción moderada';catEl.style.color='#E65100';}
+  else{catEl.textContent='Disfunción severa';catEl.style.color='#C62828';}
+}
+
+function resetBull(phase){
+  bullState[phase]=Array(17).fill(0);
+  renderBull(phase);
+}
+
+document.addEventListener('click',e=>{
+  const pop=document.getElementById('eye-pop');
+  if(pop.classList.contains('open')&&!pop.contains(e.target)&&!e.target.closest('svg'))closeEyePop();
+});
+
+// ── EXPORTAR PDF ──────────────────────────────────────────────────
+function getVal(id){return document.getElementById(id)?.value||'—';}
+function getWMSItext(phase){
+  const state=bullState[phase];
+  const anorm=[];
+  state.forEach((st,i)=>{
+    if(st>0&&st!==4)anorm.push(`Seg ${EYE_SEGS[i].id} ${EYE_SEGS[i].name} (${EYE_SEGS[i].ter}): ${EYE_LABELS[st]}`);
+  });
+  let sum=0,count=0;
+  state.forEach(st=>{if(st!==4){sum+=EYE_SCORES[st];count++;}});
+  const wmsi=count>0?(sum/count).toFixed(2):'—';
+  return {anorm,wmsi};
+}
+
+function exportPDF(){
+  const today=new Date();
+  const fecha=getVal('p-fecha')||`${today.getDate().toString().padStart(2,'0')}/${(today.getMonth()+1).toString().padStart(2,'0')}/${today.getFullYear()}`;
+  const bas=getWMSItext('basal');
+  const pic=getWMSItext('pico');
+  const rec=getWMSItext('recup');
+  const resGlobal={neg:'Negativo para isquemia',pos:'Positivo para isquemia',inc:'Indeterminado',via:'Viabilidad presente',novia:'Sin viabilidad'};
+  const resVal=document.getElementById('res-global').value;
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',Arial,sans-serif;font-size:11px;color:#1A237E;padding:0}
+    .hdr{background:linear-gradient(135deg,#0D47A1,#1976D2);color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
+    .hdr h1{font-size:16px;font-weight:800}.hdr .sub{font-size:10px;opacity:.8;margin-top:2px}
+    .pac{background:#E3F2FD;padding:10px 20px;display:flex;flex-wrap:wrap;gap:6px 20px;border-bottom:2px solid #1565C0}
+    .pac .f{display:flex;flex-direction:column;gap:1px}
+    .pac .l{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#546E7A}
+    .pac .v{font-size:11px;font-weight:700;color:#1A237E}
+    .sec{margin:12px 20px 0}
+    .sec-t{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#1565C0;border-bottom:1.5px solid #BBDEFB;padding-bottom:3px;margin-bottom:6px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px}
+    .field{display:flex;flex-direction:column;gap:1px;margin-bottom:5px}
+    .lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#546E7A}
+    .val{font-size:10px;color:#263238;line-height:1.4}
+    .wmsi-box{background:#E3F2FD;border-radius:6px;padding:6px 10px;margin-bottom:4px}
+    .wmsi-lbl{font-size:9px;color:#546E7A;font-weight:700;text-transform:uppercase}
+    .wmsi-val{font-size:16px;font-weight:800;color:#1565C0}
+    .seg-list{font-size:10px;line-height:1.6;color:#263238;padding-left:12px}
+    .res-box{border-radius:6px;padding:8px 12px;margin:10px 20px;font-size:11px;font-weight:700}
+    .res-neg{background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7}
+    .res-pos{background:#FFEBEE;color:#C62828;border:1px solid #EF9A9A}
+    .res-inc{background:#FFF9C4;color:#827717;border:1px solid #FFF176}
+    .footer{background:#F5F9FF;border-top:1.5px solid #BBDEFB;padding:6px 20px;font-size:9px;color:#546E7A;display:flex;justify-content:space-between;margin-top:14px}
+    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  </style></head><body>
+
+  <div class="hdr">
+    <div><div class="hdr h1">🫀 Informe EcoEstrés</div><div class="sub">Protocolo ABCD-FLPR · AHA 17 segmentos</div></div>
+    <div style="font-size:10px;opacity:.8;text-align:right">${fecha}<br>${getVal('p-medico')}</div>
+  </div>
+
+  <div class="pac">
+    <div class="f"><div class="l">Paciente</div><div class="v" style="font-size:14px">${getVal('p-name')}</div></div>
+    <div class="f"><div class="l">Edad/Sexo</div><div class="v">${getVal('p-age')} años · ${getVal('p-sex')}</div></div>
+    <div class="f"><div class="l">Indicación</div><div class="v">${getVal('p-ind')}</div></div>
+    <div class="f"><div class="l">Tipo de estrés</div><div class="v">${getVal('p-estres')}</div></div>
+  </div>
+
+  <div class="sec"><div class="sec-t">Parámetros del estudio</div>
+  <div class="grid2">
+    <div class="field"><div class="lbl">FC basal / FC máxima alcanzada</div><div class="val">${getVal('b-fc')} lpm / ${getVal('b-fcmax')} lpm (${getVal('fc-pct-val')})</div></div>
+    <div class="field"><div class="lbl">PA basal / PA pico</div><div class="val">${getVal('b-pa')} / ${getVal('b-papico')} mmHg</div></div>
+    <div class="field"><div class="lbl">METs / Duración</div><div class="val">${getVal('b-mets')} METs · ${getVal('b-dur')} min</div></div>
+    <div class="field"><div class="lbl">Motivo de suspensión</div><div class="val">${getVal('b-stop')}</div></div>
+    <div class="field"><div class="lbl">Cambios ECG</div><div class="val">${getVal('b-cambios')}</div></div>
+    <div class="field"><div class="lbl">CFVR</div><div class="val">${getVal('f-cfvr')!=='—'?getVal('f-cfvr'):getVal('cfvr-da-val')}</div></div>
+  </div></div>
+
+  <div class="sec"><div class="sec-t">Motilidad parietal — AHA 17 segmentos</div>
+  <div class="grid2">
+    <div>
+      <div class="wmsi-box"><div class="wmsi-lbl">WMSI Basal</div><div class="wmsi-val">${bas.wmsi}</div></div>
+      ${bas.anorm.length?`<ul class="seg-list">${bas.anorm.map(s=>`<li>${s}</li>`).join('')}</ul>`:'<div style="font-size:10px;color:#2E7D32">Motilidad normal en los 17 segmentos</div>'}
+    </div>
+    <div>
+      <div class="wmsi-box"><div class="wmsi-lbl">WMSI Pico estrés</div><div class="wmsi-val">${pic.wmsi}</div></div>
+      ${pic.anorm.length?`<ul class="seg-list">${pic.anorm.map(s=>`<li>${s}</li>`).join('')}</ul>`:'<div style="font-size:10px;color:#2E7D32">Motilidad normal en los 17 segmentos</div>'}
+    </div>
+  </div>
+  <div style="margin-top:8px">
+    <div class="wmsi-box" style="display:inline-block"><div class="wmsi-lbl">WMSI Recuperación</div><div class="wmsi-val">${rec.wmsi}</div></div>
+    ${rec.anorm.length?`<ul class="seg-list">${rec.anorm.map(s=>`<li>${s}</li>`).join('')}</ul>`:'<div style="font-size:10px;color:#2E7D32">Normalización completa</div>'}
+  </div></div>
+
+  <div class="sec"><div class="sec-t">Parámetros hemodinámicos</div>
+  <div class="grid2">
+    <div class="field"><div class="lbl">PSAP basal / Pico</div><div class="val">${getVal('p-psap-bas')} / ${getVal('p-psap-pic')} mmHg</div></div>
+    <div class="field"><div class="lbl">E/e' basal</div><div class="val">${getVal('p-ee')}</div></div>
+    <div class="field"><div class="lbl">Líneas B basales / Post-estrés</div><div class="val">${document.getElementById('l-bas')?.selectedOptions[0]?.text||'—'} / ${document.getElementById('l-post')?.selectedOptions[0]?.text||'—'}</div></div>
+    <div class="field"><div class="lbl">GLS basal / Pico</div><div class="val">${getVal('gls-bas')}% / ${getVal('gls-pic')}%</div></div>
+  </div></div>
+
+  <div class="res-box ${resVal==='pos'?'res-pos':resVal==='neg'||resVal==='via'?'res-neg':'res-inc'}">
+    ${resVal?resGlobal[resVal]||'Sin resultado registrado':'Sin resultado registrado'}
+  </div>
+
+  ${getVal('res-comment')!=='—'?`<div class="sec"><div class="sec-t">Comentario</div><div style="font-size:10px;line-height:1.6;color:#263238">${getVal('res-comment')}</div></div>`:''}
+
+  <div class="footer">
+    <span>EcoEstrés Dashboard · ${getVal('p-medico')}</span>
+    <span>Fecha: ${fecha}</span>
+    <span>Paciente: ${getVal('p-name')}</span>
+  </div>
+  </body></html>`;
+
+  const win=window.open('','_blank','width=820,height:950');
+  if(!win){alert('Permitir popups para generar el PDF');return;}
+  win.document.write(html);
+  win.document.close();
+  setTimeout(()=>win.print(),500);
+}
+
+// ── RESET ──────────────────────────────────────────────────────────
+function resetAll(){
+  if(!confirm('¿Reiniciar el estudio? Se perderán todos los datos.'))return;
+  document.querySelectorAll('input,select,textarea').forEach(el=>{
+    if(el.type==='number'||el.type==='text'||el.type==='date'||el.tagName==='TEXTAREA')el.value='';
+    else if(el.tagName==='SELECT')el.selectedIndex=0;
+  });
+  ['basal','pico','recup'].forEach(p=>{bullState[p]=Array(17).fill(0);renderBull(p);});
+  document.getElementById('res-box').className='result-box';
+  document.getElementById('fc-pct-fill').style.width='0%';
+  document.getElementById('fc-pct-val').textContent='—';
+}
+
+// Inicializar bull basal al cargar
+setTimeout(()=>{bullInited.basal=true;renderBull('basal');},100);
+</script>
+</body>
+</html>
