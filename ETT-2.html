@@ -1514,6 +1514,12 @@ function closeIntro() {
 
         </div>
 
+        <!-- BORDE DERECHO: botones globales -->
+        <div style="display:flex;flex-direction:column;gap:10px;padding-top:30px;">
+          <button type="button" class="btn btn-ghost" id="btn-contr-difusa" onclick="toggleContrDifusa(this)" style="white-space:normal;max-width:160px;">🫀 Hipocontractilidad difusa</button>
+          <button type="button" class="btn btn-ghost" id="btn-contr-multiple" onclick="toggleContrMultiple(this)" style="white-space:normal;max-width:160px;">🔀 Múltiples trastornos sectoriales</button>
+        </div>
+
       </div>
 
       <div style="display:flex;align-items:center;gap:18px;justify-content:center;flex-wrap:wrap;margin-top:18px;">
@@ -6632,7 +6638,27 @@ function calcAo() {
     const vsElB = document.getElementById('vs-val'); if (vsElB) vsElB.textContent = '—';
     const vsCalcB = document.getElementById('vs_calc'); if (vsCalcB) vsCalcB.value = '';
   }
+  // Severidad de estenosis aórtica por Vmax (ESC 2021) — driver primario
+  clasificarEA_Vmax();
 }
+
+// Clasificación de estenosis aórtica por Vmax (ESC 2021)
+function clasificarEA_Vmax() {
+  const vmax = v('vmax_ao');
+  const sel = document.getElementById('ea_grado');
+  if (!sel || vmax === null) return;
+  let opcion;
+  if (vmax < 2.0) opcion = 'Sin estenosis';
+  else if (vmax < 3.0) opcion = 'Leve (Vmax 2-3 m/s)';
+  else if (vmax < 4.0) opcion = 'Moderada (Vmax 3-4 m/s)';
+  else opcion = 'Severa (Vmax >4 m/s)';
+  sel.value = opcion;
+  const badgeEl = document.getElementById('ea-ava-badge');
+  if (badgeEl) badgeEl.textContent = vmax < 2.0
+    ? `Vmax ${vmax} m/s (<2.0) — no configura estenosis (ESC 2021).`
+    : `Sugerido por Vmax aórtica ${vmax} m/s — ESC 2021. Editable manualmente.`;
+}
+window.clasificarEA_Vmax = clasificarEA_Vmax;
 
 function sugerirSeveridadEA(ava) {
   const sel = document.getElementById('ea_grado');
@@ -7123,7 +7149,9 @@ function generarInforme() {
   {
     const partsC = [], partsE = [];
     if (emDesc) { partsC.push(`EM ${emDesc}`); partsE.push(`estenosis ${emDesc}`); suma.push(`EM ${emDesc}.`); }
+    else if (pillOn('mitral','esten')) { partsC.push('estenosis'); partsE.push('estenosis'); suma.push('Estenosis mitral.'); }
     if (imG > 0) { partsC.push(`IM ${imTxt[imG]}`); partsE.push(`insuficiencia ${imTxt[imG]}`); suma.push(`IM ${imTxt[imG]}.`); }
+    else if (pillOn('mitral','insuf')) { partsC.push('insuficiencia'); partsE.push('insuficiencia'); suma.push('Insuficiencia mitral.'); }
     if (partsC.length === 0) {
       inf.push(estiloPick(
         `VM normal.`,
@@ -7145,7 +7173,9 @@ function generarInforme() {
     const partsC = [], partsE = [];
     if (esclerosis) { partsC.push('esclerosis'); partsE.push('esclerosis valvular'); }
     if (eaDesc) { partsC.push(`EAo ${eaDesc}`); partsE.push(`estenosis ${eaDesc}`); suma.push(`EAo ${eaDesc}.`); }
+    else if (!esclerosis && pillOn('aortica','esten')) { partsC.push('estenosis'); partsE.push('estenosis'); suma.push('Estenosis aórtica.'); }
     if (iaG > 0) { partsC.push(`IAo ${imTxt[iaG]}`); partsE.push(`insuficiencia ${imTxt[iaG]}`); suma.push(`IAo ${imTxt[iaG]}.`); }
+    else if (pillOn('aortica','insuf')) { partsC.push('insuficiencia'); partsE.push('insuficiencia'); suma.push('Insuficiencia aórtica.'); }
     if (partsC.length === 0) {
       inf.push(estiloPick(
         `VAo normal.`,
@@ -7198,11 +7228,13 @@ function generarInforme() {
   const itTrv = v('vmax_it');          // VRT
   const pmadV = v('pmad');             // requiere VCI
   const tap   = v('tvia');             // TAP (ms)
-  const hayIT = itG > 0 || itTrv > 0;
+  const hayIT = itG > 0 || itTrv > 0 || pillOn('tricuspide','insuf');
   const gradVDAD = itTrv > 0 ? (4 * itTrv * itTrv).toFixed(0) : null;
 
+  const etPill = !etDesc && pillOn('tricuspide','esten');
   if (etDesc) suma.push(`ET ${etDesc}.`);
-  const etFrag = etDesc ? `Estenosis tricuspídea ${etDesc}. ` : '';
+  else if (etPill) suma.push('Estenosis tricuspídea.');
+  const etFrag = etDesc ? `Estenosis tricuspídea ${etDesc}. ` : (etPill ? 'Estenosis tricuspídea. ' : '');
 
   const tapBajo = tap !== null && tap < 105;
   if (hayIT) {
@@ -8308,8 +8340,9 @@ function toggleRef(id, headEl) {
       if (!el) return;
       el.querySelectorAll("path,line").forEach(function(p) {
         if (e === "Normal") {
-          p.style.stroke = "#e2e8f0";
-          p.style.strokeWidth = "2.5";
+          // Normal evaluado = idéntico a virgen (color base del esquema): sin overrides
+          p.style.removeProperty("stroke");
+          p.style.removeProperty("stroke-width");
         } else {
           p.style.stroke = stroke;
           p.style.strokeWidth = "4";
@@ -8318,9 +8351,15 @@ function toggleRef(id, headEl) {
     });
     const qx = document.getElementById(ETE_QX_MAP[seg]);
     if (qx) {
-      qx.style.fill = e === "Normal" ? "#ffffff22" : fill;
-      qx.style.stroke = e === "Normal" ? "#ffffff44" : stroke;
-      qx.style.strokeWidth = e === "Normal" ? "1" : "2";
+      if (e === "Normal") {
+        qx.style.removeProperty("fill");
+        qx.style.removeProperty("stroke");
+        qx.style.removeProperty("stroke-width");
+      } else {
+        qx.style.fill = fill;
+        qx.style.stroke = stroke;
+        qx.style.strokeWidth = "2";
+      }
     }
     eteActualizarResumen();
     localStorage.setItem("ete_seg_" + seg, ete_estado[seg]);
@@ -8398,6 +8437,12 @@ function cargarValvPills() {
   });
 }
 window.toggleValvPill = toggleValvPill;
+// ¿Está activo el pill de insuficiencia/estenosis de una válvula? (para reflejar en el informe)
+function pillOn(valvula, tipo) {
+  const b = document.getElementById('pill-' + tipo + '-' + valvula);
+  return b ? b.classList.contains('btn-primary') : false;
+}
+window.pillOn = pillOn;
 setTimeout(cargarValvPills, 150);
 
 // ══ OAI ══
@@ -8999,9 +9044,33 @@ function contrCiclar(id){
 function contrAplicarTodos(){
   document.querySelectorAll("[data-contrseg]").forEach(el=> contrAplicar(el.getAttribute("data-contrseg")));
 }
+let contrDifusa = false, contrMultiple = false, contrSnapshot = null;
+function _contrBtnState(id, on){ const b = document.getElementById(id); if (b){ b.classList.toggle('btn-primary', on); b.classList.toggle('btn-ghost', !on); } }
 window.contrReset = function(){
   Object.keys(contrEstado).forEach(k=> contrEstado[k]=0);
+  contrDifusa = false; contrMultiple = false; contrSnapshot = null;
+  _contrBtnState('btn-contr-difusa', false);
+  _contrBtnState('btn-contr-multiple', false);
   contrAplicarTodos();
+  contrRenderInforme();
+};
+window.toggleContrDifusa = function(btn){
+  contrDifusa = !contrDifusa;
+  if (contrDifusa){
+    contrSnapshot = Object.assign({}, contrEstado);
+    document.querySelectorAll("[data-contrseg]").forEach(el=>{ contrEstado[el.getAttribute("data-contrseg")] = 1; });
+  } else {
+    Object.keys(contrEstado).forEach(k=> delete contrEstado[k]);
+    if (contrSnapshot) Object.assign(contrEstado, contrSnapshot);
+    contrSnapshot = null;
+  }
+  _contrBtnState('btn-contr-difusa', contrDifusa);
+  contrAplicarTodos();
+  contrRenderInforme();
+};
+window.toggleContrMultiple = function(btn){
+  contrMultiple = !contrMultiple;
+  _contrBtnState('btn-contr-multiple', contrMultiple);
   contrRenderInforme();
 };
 
@@ -9225,6 +9294,8 @@ function contrDibujarLeyenda(){
 }
 
 function contrGetLineasInforme(){
+  if (contrDifusa) return ["Se observa hipocontractilidad difusa del VI."];
+  if (contrMultiple) return ["Se observan múltiples trastornos de la contractilidad segmentaria del VI."];
   const porMotilidad = {1:[], 2:[], 3:[], 4:[]};
   let apexIdx = 0;
   Object.entries(contrEstado).forEach(([id, idx])=>{
