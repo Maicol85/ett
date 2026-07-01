@@ -8759,7 +8759,7 @@ const CONTR_G = { rxO:92, apexO:55, qO:0.55, bulgeO:0.04,
             rxI:70, apexI:150, qI:0.55, bulgeI:0.02, yBottom:320 };
 function contrPolilinea(pts){ return pts.map(p=>p[0]+","+p[1]).join(" "); }
 
-function contrDibujarVistaApical(svgId, paredIzq, paredDer, bordeExtra){
+function contrDibujarVistaApical(svgId, paredIzq, paredDer, bordeExtra, numeros){
   const svg = document.getElementById(svgId);
   if(!svg) return;
   const yB = CONTR_G.yBottom;
@@ -8828,6 +8828,32 @@ function contrDibujarVistaApical(svgId, paredIzq, paredDer, bordeExtra){
       d += `L ${x},${y} `;
     }
     html += `<path d="${d}" fill="none" stroke="#cfd6e6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>`;
+  }
+
+  // ── NÚMEROS DE SEGMENTO ──
+  if (numeros) {
+    const yB = CONTR_G.yBottom;
+    const apexI = CONTR_G.apexI;
+    // Centros Y de cada nivel (fracción media del rango)
+    const centrosY = [
+      yB - 0.15*(yB-apexI),   // basal  (f 0–0.30)
+      yB - 0.46*(yB-apexI),   // mid    (f 0.30–0.62)
+      yB - 0.81*(yB-apexI)    // apical (f 0.62–1.0)
+    ];
+    const xIzq = 58, xDer = 182;
+    const estilo = `font-size="15" font-weight="700" fill="#e8ecf4"
+      text-anchor="middle" dominant-baseline="middle" pointer-events="none"`;
+    // Izquierda
+    [0,1,2].forEach(i => {
+      html += `<text x="${xIzq}" y="${centrosY[i]}" ${estilo}>${numeros.izq[i]}</text>`;
+    });
+    // Derecha
+    [0,1,2].forEach(i => {
+      html += `<text x="${xDer}" y="${centrosY[i]}" ${estilo}>${numeros.der[i]}</text>`;
+    });
+    // Apex
+    const yApex = CONTR_G.apexO + (apexI - CONTR_G.apexO) * 0.5;
+    html += `<text x="120" y="${yApex}" ${estilo}>${numeros.apex}</text>`;
   }
 
   svg.innerHTML = html;
@@ -8954,9 +8980,18 @@ function contrRenderInforme(){
 }
 
 function contrInit(){
-  contrDibujarVistaApical("contr-svg-a4c", "inferoseptal", "anterolateral", {lado:"izq", tContacto:0.80, largo:160, curvatura:55});
-  contrDibujarVistaApical("contr-svg-a2c", "inferior", "anterior", null);
-  contrDibujarVistaApical("contr-svg-a3c", "anteroseptal", "inferolateral", {lado:"der", tContacto:0.38, largo:130, curvatura:65});
+  contrDibujarVistaApical("contr-svg-a4c", "inferoseptal", "anterolateral",
+    {lado:"izq", tContacto:0.80, largo:160, curvatura:55},
+    { izq:[3,9,14], der:[6,12,16], apex:17 }
+  );
+  contrDibujarVistaApical("contr-svg-a2c", "inferior", "anterior",
+    null,
+    { izq:[4,10,15], der:[1,7,13], apex:17 }
+  );
+  contrDibujarVistaApical("contr-svg-a3c", "inferolateral", "anteroseptal",
+    {lado:"der", tContacto:0.38, largo:130, curvatura:65},
+    { izq:[5,11,16], der:[2,8,14], apex:17 }
+  );
   contrDibujarBullseye();
   contrDibujarLeyenda();
   contrAplicarTodos();
