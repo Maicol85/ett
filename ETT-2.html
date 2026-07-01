@@ -955,6 +955,10 @@ function closeIntro() {
         Se calculan automáticamente los valores disponibles del estudio actual.
       </p>
 
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:12px;padding:8px 10px;background:var(--bg3);border-radius:8px;cursor:pointer;">
+        <input type="checkbox" id="tep_incluir" onchange="if(document.getElementById('informe_texto')&&document.getElementById('informe_texto').value.trim())generarInforme();"> 📝 Incluir probabilidad de TEP en informe
+      </label>
+
       <!-- Campos nuevos -->
       <div class="grid-2" style="margin-bottom:10px;">
         <div class="fg"><label>Signo de McConnell</label>
@@ -1024,6 +1028,10 @@ function closeIntro() {
   <div class="card">
     <div class="card-body">
       <p style="font-size:11px;color:var(--text2);margin-bottom:12px;">Probabilidad de HTP según VRT + signos ecocardiográficos en 3 categorías (ESC/ERS 2022). Los signos derivables de datos ya ingresados se toman automáticamente.</p>
+
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:12px;padding:8px 10px;background:var(--bg3);border-radius:8px;cursor:pointer;">
+        <input type="checkbox" id="htp2022_incluir" onchange="if(document.getElementById('informe_texto')&&document.getElementById('informe_texto').value.trim())generarInforme();"> 📝 Incluir probabilidad de HTP en informe
+      </label>
 
       <!-- Paso 1 -->
       <div style="font-size:12px;font-weight:700;color:var(--accent2);margin:0 0 6px;">Paso 1 — Velocidad de regurgitación tricuspídea (VRT)</div>
@@ -7369,7 +7377,8 @@ function generarInforme() {
   // ── HTP — PROBABILIDAD ECOCARDIOGRÁFICA (ESC 2022) ──
   if (typeof calcHTP2022 === 'function') calcHTP2022();
   const h22 = window._htp2022;
-  if (h22 && (h22.vrtCat !== 'nomedible' || h22.nCat > 0)) {
+  const htp2022Incluir = document.getElementById('htp2022_incluir') && document.getElementById('htp2022_incluir').checked;
+  if (htp2022Incluir && h22 && (h22.vrtCat !== 'nomedible' || h22.nCat > 0)) {
     const cats = [];
     if (h22.catA) cats.push('ventrículos');
     if (h22.catB) cats.push('arteria pulmonar');
@@ -7382,6 +7391,7 @@ function generarInforme() {
 
   // ── TEP / DISFUNCIÓN VD AGUDA ──
   (function() {
+    if (!(document.getElementById('tep_incluir') && document.getElementById('tep_incluir').checked)) return;
     const tapse   = v('tapse');
     const psap    = v('psap_calc');
     const vdBas   = v('vd_bas');
