@@ -357,7 +357,15 @@ window.cerrarSesion = cerrarSesion;
       <button type="button" class="btn btn-ghost estilo-pill" data-estilo="narrativo" onclick="setEstiloInforme('narrativo')" title="Informe narrativo" style="padding:6px 8px;">📖</button>
     </span>
     <button class="btn btn-primary" onclick="generarInforme()">📝 Generar Informe</button>
-    <button class="btn btn-green" onclick="generarPDF()">⬇️ PDF</button>
+    <span style="display:inline-flex;flex-direction:column;align-items:center;gap:4px;">
+      <button class="btn btn-green" onclick="generarPDF()">⬇️ PDF</button>
+      <span style="display:inline-flex;gap:4px;" title="Color del PDF">
+        <span class="pdf-color-sw" data-idx="1" onclick="setPdfColor(1)" title="Azul"    style="width:20px;height:20px;border-radius:5px;background:#1a3a5c;cursor:pointer;box-sizing:border-box;border:1px solid rgba(255,255,255,0.25);"></span>
+        <span class="pdf-color-sw" data-idx="2" onclick="setPdfColor(2)" title="Verde"   style="width:20px;height:20px;border-radius:5px;background:#1a5c3a;cursor:pointer;box-sizing:border-box;border:1px solid rgba(255,255,255,0.25);"></span>
+        <span class="pdf-color-sw" data-idx="3" onclick="setPdfColor(3)" title="Violeta" style="width:20px;height:20px;border-radius:5px;background:#4a1a7a;cursor:pointer;box-sizing:border-box;border:1px solid rgba(255,255,255,0.25);"></span>
+        <span class="pdf-color-sw" data-idx="4" onclick="setPdfColor(4)" title="Bordo"   style="width:20px;height:20px;border-radius:5px;background:#7B2D42;cursor:pointer;box-sizing:border-box;border:1px solid rgba(255,255,255,0.25);"></span>
+      </span>
+    </span>
     <button class="btn btn-ghost" onclick="showIntro()" title="Ayuda / Guía de uso" style="padding:6px 10px;font-size:14px;">?</button>
     <button class="btn btn-ghost" onclick="cerrarSesion()" title="Cerrar sesión">🔒 Cerrar</button>
   </div>
@@ -7686,7 +7694,7 @@ function generarPDFReal() {
 
   // ─── tema de color según centro seleccionado (TAREA 3) ───────
   const _temaPDF = { '1':[26,58,92], '2':[26,92,58], '3':[74,26,122], '4':[123,45,66] };
-  const TEMA = _temaPDF[String(localStorage.getItem('centro_tipo_activo') || '1')] || _temaPDF['1'];
+  const TEMA = _temaPDF[String(localStorage.getItem('pdf_color') || '1')] || _temaPDF['1'];
 
   // ─── data readers (uses global sv/v) ─────────────────────────
   const bsa = getBSA();
@@ -8528,6 +8536,23 @@ function pillOn(valvula, tipo) {
 }
 window.pillOn = pillOn;
 setTimeout(cargarValvPills, 150);
+
+// ══ COLOR DEL PDF (selector de 4 cuadrados en el header) ══
+function setPdfColor(idx) {
+  try { localStorage.setItem('pdf_color', idx); } catch(e){}
+  document.querySelectorAll('.pdf-color-sw').forEach(sw => {
+    const on = sw.getAttribute('data-idx') === String(idx);
+    sw.style.border = on ? '3px solid #ffffff' : '1px solid rgba(255,255,255,0.25)';
+    sw.style.boxShadow = on ? '0 0 0 1px rgba(0,0,0,0.45)' : 'none';
+  });
+}
+function initPdfColor() {
+  let saved = '1';
+  try { saved = localStorage.getItem('pdf_color') || '1'; } catch(e){}
+  setPdfColor(saved);
+}
+window.setPdfColor = setPdfColor;
+setTimeout(initPdfColor, 60);
 
 // ══ OAI ══
 function calcOAI() {
