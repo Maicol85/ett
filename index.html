@@ -1139,6 +1139,8 @@ function closeIntro() {
         </div>
       </div>
       <div class="calc-box">
+        <div class="calc-row"><span class="calc-lbl">Gradiente VD-AD (4×VRT²)</span><span id="grad-vdad-interp">—</span></div>
+        <div class="calc-row"><span class="calc-lbl">PSAP estimada</span><span id="psap-interp">—</span></div>
         <div class="calc-row"><span class="calc-lbl">HTP — clasificación ESC 2022</span><span id="htp-interp">—</span></div>
       </div>
     </div>
@@ -6168,32 +6170,60 @@ window.calcTEP = calcTEP;
 
 function calcPmAD() {
   const diam = v('vci_diam'), col = sv('vci_col');
-  if (!diam || !col) return;
+  const pmadInterp = document.getElementById('pmad-interp');
+  // Sin VCI (diámetro + colapso) no hay PmAD estimable
+  if (!diam || !col) {
+    setv('pmad', '');
+    if (pmadInterp) pmadInterp.textContent = '—';
+    calcPSAP();
+    return;
+  }
   let pmad, interp;
   if (diam < 21 && col === '>50') { pmad = 3; interp = '3 mmHg (normal)'; }
   else if (diam < 21 && col === '<50') { pmad = 8; interp = '8 mmHg (levemente elevada)'; }
   else if (diam >= 21 && col === '>50') { pmad = 8; interp = '8 mmHg (levemente elevada)'; }
   else { pmad = 15; interp = '15 mmHg (elevada)'; }
   setv('pmad', pmad);
-  document.getElementById('pmad-interp').textContent = interp;
+  if (pmadInterp) pmadInterp.textContent = interp;
   calcPSAP();
 }
 
 // ══ PSAP ══
 function calcPSAP() {
   const vit = v('vmax_it'), pmad = v('pmad');
-  if (!vit) return;
+  const gradEl = document.getElementById('grad-vdad-interp');
+  const psapEl = document.getElementById('psap-interp');
+  const htpEl  = document.getElementById('htp-interp');
+  // Sin VRT: no hay dato primario
+  if (!vit) {
+    setv('psap_calc', ''); setv('pap_med', '');
+    if (gradEl) gradEl.textContent = '—';
+    if (psapEl) psapEl.textContent = '—';
+    if (htpEl)  htpEl.innerHTML = '—';
+    if (typeof calcTEP === 'function') calcTEP();
+    return;
+  }
+  // Dato primario: gradiente VD-AD = 4 × VRT²
   const gradIT = 4 * vit * vit;
-  const psap = gradIT + (pmad || 5);
-  setv('psap_calc', psap.toFixed(0));
-  const papMedia = (psap * 0.61 + 2).toFixed(0);
-  setv('pap_med', papMedia + ' mmHg (est.)');
-  let h;
-  if (psap <= 40) h = badge('green','Sin HTP (≤40mmHg)');
-  else if (psap <= 55) h = badge('yellow','HTP leve (41-55mmHg)');
-  else if (psap <= 70) h = badge('orange','HTP moderada (56-70mmHg)');
-  else h = badge('red','HTP severa (>70mmHg)');
-  document.getElementById('htp-interp').innerHTML = h;
+  if (gradEl) gradEl.textContent = gradIT.toFixed(0) + ' mmHg';
+  // PSAP sólo si hay VCI (PmAD)
+  if (pmad !== null) {
+    const psap = gradIT + pmad;
+    setv('psap_calc', psap.toFixed(0));
+    const papMedia = (psap * 0.61 + 2).toFixed(0);
+    setv('pap_med', papMedia + ' mmHg (est.)');
+    if (psapEl) psapEl.textContent = psap.toFixed(0) + ' mmHg (PmAD ' + pmad + ' mmHg)';
+    let h;
+    if (psap <= 40) h = badge('green','Sin HTP (≤40mmHg)');
+    else if (psap <= 55) h = badge('yellow','HTP leve (41-55mmHg)');
+    else if (psap <= 70) h = badge('orange','HTP moderada (56-70mmHg)');
+    else h = badge('red','HTP severa (>70mmHg)');
+    if (htpEl) htpEl.innerHTML = h;
+  } else {
+    setv('psap_calc', ''); setv('pap_med', '');
+    if (psapEl) psapEl.textContent = '— (requiere VCI)';
+    if (htpEl)  htpEl.innerHTML = '—';
+  }
   if (typeof calcTEP === 'function') calcTEP();
 }
 
@@ -7015,29 +7045,34 @@ function generarInforme() {
   // ── TRICÚSPIDE / ESTENOSIS / PSAP ──
   const etG = sv('et_grado') || '';
   const etDesc = etG && etG !== 'Sin estenosis' ? etG.toLowerCase() : null;
-  const tricC = [], tricE = [];
-  const itTrv = v('vmax_it');
-  if (etDesc) { tricC.push(`ET ${etDesc}`); tricE.push(`estenosis ${etDesc}`); suma.push(`ET ${etDesc}.`); }
-  if (itG > 0) { tricC.push(`IT ${imTxt[itG]}`); tricE.push(`insuficiencia ${imTxt[itG]}`); suma.push(`IT ${imTxt[itG]}.`); }
-  else if (itTrv > 0) { tricC.push('IT'); tricE.push('insuficiencia'); suma.push('IT presente.'); }
-  if (tricC.length > 0) {
-    const psapFrag = psap ? ` (PSAP ${psap} mmHg)` : '';
-    const cT = `VT con ${tricC.join(' y ')}${psapFrag}.`;
-    let eT = `Válvula tricúspide con ${tricE.join(' e ')}`;
-    if (psap) eT += `, que permite estimar PSAP de ${psap} mmHg`;
-    let nT = `La válvula tricúspide presenta ${tricE.join(' e ')}`;
-    if (psap) nT += `, lo que permite estimar una presión sistólica de la arteria pulmonar de ${psap} mmHg`;
-    inf.push(estiloPick(cT, eT + '.', nT + '.'));
-  } else if (psap) {
-    inf.push(estiloPick(
-      `Sin IT significativa (PSAP ${psap} mmHg).`,
-      `Válvula tricúspide sin insuficiencia significativa que permite estimar PSAP de ${psap} mmHg.`,
-      `La válvula tricúspide no presenta insuficiencia significativa, estimándose una presión sistólica de la arteria pulmonar de ${psap} mmHg.`));
+  const itTrv = v('vmax_it');          // VRT
+  const pmadV = v('pmad');             // requiere VCI
+  const tap   = v('tvia');             // TAP (ms)
+  const hayIT = itG > 0 || itTrv > 0;
+  const gradVDAD = itTrv > 0 ? (4 * itTrv * itTrv).toFixed(0) : null;
+
+  if (etDesc) suma.push(`ET ${etDesc}.`);
+  const etFrag = etDesc ? `Estenosis tricuspídea ${etDesc}. ` : '';
+
+  if (hayIT) {
+    const itGrad = itG > 0 ? ` ${imTxt[itG]}` : '';
+    suma.push(itG > 0 ? `IT ${imTxt[itG]}.` : 'IT presente.');
+    if (gradVDAD !== null && pmadV !== null && psap) {
+      // Con IT + con VCI
+      inf.push(`${etFrag}IT${itGrad} con gradiente VD-AD de ${gradVDAD} mmHg, PSAP estimada de ${psap} mmHg (PmAD ${pmadV} mmHg).`);
+    } else if (gradVDAD !== null) {
+      // Con IT + sin VCI (hay VRT pero no PmAD/PSAP)
+      inf.push(`${etFrag}IT${itGrad} con gradiente VD-AD de ${gradVDAD} mmHg. PSAP no calculable sin medición de VCI.`);
+    } else {
+      // IT graduada sin VRT registrada
+      inf.push(`${etFrag}Insuficiencia tricuspídea${itGrad}. Sin registro de velocidad de regurgitación que permita estimar PSAP.`);
+    }
   } else {
-    inf.push(estiloPick(
-      `Sin IT que permita estimar PSAP.`,
-      `Válvula tricúspide sin insuficiencia que permita estimar PSAP.`,
-      `La válvula tricúspide no presenta insuficiencia que permita la estimación de la presión pulmonar.`));
+    if (tap !== null && tap < 105) {
+      inf.push(`${etFrag}Sin insuficiencia tricuspídea valorable. Elementos indirectos de HTP dado por TAP < 105 ms.`);
+    } else {
+      inf.push(`${etFrag}Válvula tricúspide sin insuficiencia valorable. No es posible estimar PSAP.`);
+    }
   }
 
   // ── VÁLVULA PULMONAR ──
@@ -7272,9 +7307,21 @@ function showTabById(id) {
 // ══ LIMPIAR ══
 function limpiar() {
   if (!confirm('¿Limpiar todos los campos para nuevo estudio?')) return;
-  document.querySelectorAll('input[type=text], input[type=number]').forEach(el => { if (!el.readOnly) el.value = ''; });
+  // Inputs (incluye readonly calculados)
+  document.querySelectorAll('input[type=text], input[type=number]').forEach(el => { el.value = ''; });
+  // Grados de severidad ocultos → 0
+  ['im_grado','ia_grado','it_grado'].forEach(id => { const el = document.getElementById(id); if (el) el.value = '0'; });
   document.querySelectorAll('textarea').forEach(el => el.value = '');
   document.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
+  // Displays calculados / interpretativos → —
+  document.querySelectorAll('.calc-box .calc-row span[id]:not(.calc-lbl)').forEach(el => el.innerHTML = '—');
+  // Badges de sugerencia automática (THP, AVA, VP, etc.)
+  document.querySelectorAll('[id$="-badge"]').forEach(el => el.textContent = '');
+  // Válvulas: pills a estado neutro + ocultar bloques desplegados + limpiar preferencia
+  document.querySelectorAll('.valv-pill').forEach(b => { b.classList.remove('btn-primary'); b.classList.add('btn-ghost'); });
+  document.querySelectorAll('[id^="bloque-insuf-"], [id^="bloque-esten-"]').forEach(el => el.style.display = 'none');
+  ['mitral','aortica','tricuspide'].forEach(vv => ['insuf','esten'].forEach(t => { try { localStorage.removeItem('valv-pill-' + t + '-' + vv); } catch(e){} }));
+  // Fecha e índices antropométricos
   document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('bsa-val').textContent = '— m²';
   document.getElementById('imc-val').textContent = '— kg/m²';
@@ -7282,7 +7329,63 @@ function limpiar() {
 }
 
 // ══ PDF (jsPDF) ══
+// Panel de revisión de severidades antes de generar el PDF (TAREA 3)
 function generarPDF() {
+  if (document.getElementById('pdf-review-overlay')) return;
+  const GTX = ['ausente','leve','moderada','moderada-severa','severa'];
+  const imG = parseInt(sv('im_grado')) || 0;
+  const iaG = parseInt(sv('ia_grado')) || 0;
+  const itG = parseInt(sv('it_grado')) || 0;
+  const optsInsuf = (sel) => GTX.map((t,i) => `<option value="${i}" ${i===sel?'selected':''}>${i} · ${t}</option>`).join('');
+  const cloneSel = (id) => {
+    const el = document.getElementById(id);
+    if (!el) return '<span style="color:var(--text2);">—</span>';
+    return `<select data-target="${id}" style="width:100%;">${el.innerHTML}</select>`;
+  };
+  const ov = document.createElement('div');
+  ov.id = 'pdf-review-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  ov.innerHTML =
+    '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;max-width:520px;width:100%;max-height:85vh;overflow:auto;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,0.5);">' +
+      '<div style="font-size:15px;font-weight:700;color:var(--accent2);margin-bottom:4px;">📋 Revisión de severidades — Válvulas</div>' +
+      '<p style="font-size:11px;color:var(--text2);margin:0 0 14px;">Verificá y corregí si hace falta las severidades que irán en la tabla del PDF. Sólo al confirmar se genera el PDF.</p>' +
+      '<div class="grid-2" style="gap:10px;">' +
+        '<div class="fg"><label>IM — Insuficiencia mitral</label><select id="rev-im">' + optsInsuf(imG) + '</select></div>' +
+        '<div class="fg"><label>EM — Estenosis mitral</label>' + cloneSel('em_grado') + '</div>' +
+        '<div class="fg"><label>IAo — Insuficiencia aórtica</label><select id="rev-ia">' + optsInsuf(iaG) + '</select></div>' +
+        '<div class="fg"><label>EAo — Estenosis aórtica</label>' + cloneSel('ea_grado') + '</div>' +
+        '<div class="fg"><label>IT — Insuficiencia tricuspídea</label><select id="rev-it">' + optsInsuf(itG) + '</select></div>' +
+        '<div class="fg"><label>Válvula pulmonar</label>' + cloneSel('vp_morf') + '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px;">' +
+        '<button class="btn btn-ghost" id="rev-cancel">Cancelar</button>' +
+        '<button class="btn btn-green" id="rev-confirm">✓ Confirmar y generar PDF</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(ov);
+  // Prefijar valores de los selects clonados
+  ['em_grado','ea_grado','vp_morf'].forEach(id => {
+    const src = document.getElementById(id);
+    const dst = ov.querySelector('select[data-target="' + id + '"]');
+    if (src && dst) dst.value = src.value;
+  });
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+  ov.querySelector('#rev-cancel').onclick = () => ov.remove();
+  ov.querySelector('#rev-confirm').onclick = () => {
+    const setGrade = (hid, rev) => { const el = document.getElementById(hid), r = ov.querySelector('#' + rev); if (el && r) el.value = r.value; };
+    setGrade('im_grado','rev-im'); setGrade('ia_grado','rev-ia'); setGrade('it_grado','rev-it');
+    ['em_grado','ea_grado','vp_morf'].forEach(id => {
+      const dst = document.getElementById(id);
+      const src = ov.querySelector('select[data-target="' + id + '"]');
+      if (dst && src) dst.value = src.value;
+    });
+    ov.remove();
+    generarPDFReal();
+  };
+}
+window.generarPDF = generarPDF;
+
+function generarPDFReal() {
   if (typeof window.jspdf === 'undefined') {
     alert('La biblioteca PDF está cargando, intentá en un momento.');
     return;
@@ -8680,8 +8783,8 @@ function pdfDeInformeGuardado(id) {
   if (typeof calcIT_ESC === 'function') calcIT_ESC();
   if (typeof calcContIM === 'function') calcContIM();
 
-  // Generate PDF
-  generarPDF();
+  // Generate PDF (flujo automático de informe guardado — sin modal de revisión)
+  generarPDFReal();
 
   // Restore form state
   setTimeout(() => {
