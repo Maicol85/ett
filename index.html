@@ -652,6 +652,9 @@ function closeIntro() {
             <button type="button" class="btn btn-ghost centro-opt" id="centro_opt_3" onclick="selectCentroTipo(3)">
               <span contenteditable="true" class="centro-label" id="centro_label_3" ondblclick="event.stopPropagation()" onblur="saveCentroLabel(3)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">Centro 3</span>
             </button>
+            <button type="button" class="btn btn-ghost centro-opt" id="centro_opt_4" onclick="selectCentroTipo(4)">
+              <span contenteditable="true" class="centro-label" id="centro_label_4" ondblclick="event.stopPropagation()" onblur="saveCentroLabel(4)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">Centro 4</span>
+            </button>
           </div>
           <input type="hidden" id="centro_tipo">
         </div>
@@ -1069,9 +1072,26 @@ function closeIntro() {
 <div id="tab-doppler" class="tab-section">
 
   <!-- Doppler mitral -->
+  <div class="card" style="margin-bottom:6px;">
+    <div class="card-head" style="cursor:pointer;user-select:none;" onclick="toggleCard('dop-mitral',this)">〰️ Doppler Mitral — Función Diastólica<span id="dop-mitral-arrow" style="float:right;transition:transform 0.2s;">▼</span></div>
+  </div>
+  <div id="dop-mitral" style="display:block;">
   <div class="card">
-    <div class="card-head">〰️ Doppler Mitral — Función Diastólica</div>
     <div class="card-body">
+      <div class="grid-2" style="margin-bottom:10px;">
+        <div class="fg"><label>Algoritmo función diastólica</label>
+          <select id="diast_algoritmo" onchange="calcDiastol()">
+            <option value="bse2024">BSE 2024 (descriptivo)</option>
+            <option value="ase2016">ASE/EACVI 2016 (Grados I–III)</option>
+          </select>
+        </div>
+        <div class="fg"><label>Ritmo</label>
+          <select id="diast_ritmo" onchange="calcDiastol()">
+            <option value="sinusal">Ritmo sinusal</option>
+            <option value="fa">Fibrilación auricular</option>
+          </select>
+        </div>
+      </div>
       <div class="grid-4">
         <div class="fg">
           <label>Onda E (cm/s)</label>
@@ -1110,14 +1130,18 @@ function closeIntro() {
         <div class="calc-row"><span class="calc-lbl">E/A</span><span class="calc-val" id="ea-val">—</span></div>
         <div class="calc-row"><span class="calc-lbl">e' promedio</span><span class="calc-val" id="eprom-val">—</span></div>
         <div class="calc-row"><span class="calc-lbl">E/e' promedio</span><span class="calc-val" id="ee-val">—</span></div>
-        <div class="calc-row"><span class="calc-lbl">Función diastólica — BSE 2024</span><span id="dd-interp">—</span></div>
+        <div class="calc-row"><span class="calc-lbl">Función diastólica</span><span id="dd-interp">—</span></div>
       </div>
     </div>
   </div>
+  </div>
 
   <!-- Doppler Aórtico -->
+  <div class="card" style="margin-bottom:6px;">
+    <div class="card-head" style="cursor:pointer;user-select:none;" onclick="toggleCard('dop-aortico',this)">〰️ Doppler Aórtico — TSVI / Válvula Aórtica<span id="dop-aortico-arrow" style="float:right;transition:transform 0.2s;">▶</span></div>
+  </div>
+  <div id="dop-aortico" style="display:none;">
   <div class="card">
-    <div class="card-head">〰️ Doppler Aórtico — TSVI / Válvula Aórtica</div>
     <div class="card-body">
       <div class="grid-3">
         <div class="fg">
@@ -1179,10 +1203,14 @@ function closeIntro() {
       </div>
     </div>
   </div>
+  </div>
 
   <!-- Doppler Tricuspídeo / PSAP -->
+  <div class="card" style="margin-bottom:6px;">
+    <div class="card-head" style="cursor:pointer;user-select:none;" onclick="toggleCard('dop-tricusp',this)">〰️ Doppler Tricuspídeo — PSAP<span id="dop-tricusp-arrow" style="float:right;transition:transform 0.2s;">▶</span></div>
+  </div>
+  <div id="dop-tricusp" style="display:none;">
   <div class="card">
-    <div class="card-head">〰️ Doppler Tricuspídeo — PSAP</div>
     <div class="card-body">
       <div class="grid-4">
         <div class="fg">
@@ -1209,10 +1237,14 @@ function closeIntro() {
       </div>
     </div>
   </div>
+  </div>
 
   <!-- Doppler Pulmonar -->
+  <div class="card" style="margin-bottom:6px;">
+    <div class="card-head" style="cursor:pointer;user-select:none;" onclick="toggleCard('dop-pulmonar',this)">〰️ Doppler Pulmonar<span id="dop-pulmonar-arrow" style="float:right;transition:transform 0.2s;">▶</span></div>
+  </div>
+  <div id="dop-pulmonar" style="display:none;">
   <div class="card">
-    <div class="card-head">〰️ Doppler Pulmonar</div>
     <div class="card-body">
       <div class="grid-2">
         <div class="fg">
@@ -1225,6 +1257,7 @@ function closeIntro() {
         </div>
       </div>
     </div>
+  </div>
   </div>
 
 </div>
@@ -6432,8 +6465,69 @@ function calcDiastolBSE2024() {
   if (dd) dd.innerHTML = resultado.badge;
 
   window._bse2024 = resultado;
+  window._diastResult = resultado;
 }
-window.calcDiastol = calcDiastolBSE2024; // compatibilidad con oninput existentes
+
+// ══ Algoritmo ASE/EACVI 2016 (grados I–III) ══
+function calcDiastolASE2016() {
+  const e = v('onda_e'), a = v('onda_a'), esep = v('e_sep'), elat = v('e_lat');
+  const aiVol = v('ai_vol'), bsa = getBSA(), trv = v('vmax_it');
+
+  if (e && a) document.getElementById('ea-val').textContent = (e/a).toFixed(2);
+  let eprom = null;
+  if (esep && elat) { eprom = (esep + elat)/2; document.getElementById('eprom-val').textContent = eprom.toFixed(1) + ' cm/s'; }
+  else if (esep) eprom = esep; else if (elat) eprom = elat;
+  let ee = null;
+  if (e && eprom) { ee = e/eprom; document.getElementById('ee-val').textContent = ee.toFixed(1); }
+  const lavi = (aiVol && bsa) ? aiVol/bsa : null;
+  const ea = (e && a) ? e/a : null;
+
+  // criterios positivos entre los disponibles: E/e'>14, LAVi>34, TR Vmax>2.8
+  let pos = 0, disp = 0;
+  if (ee !== null)   { disp++; if (ee > 14) pos++; }
+  if (lavi !== null) { disp++; if (lavi > 34) pos++; }
+  if (trv !== null)  { disp++; if (trv > 2.8) pos++; }
+
+  let texto = null, textoSuma = null, cls = 'gray', badgeTxt = 'Indeterminado — ASE 2016';
+  if (ea === null || disp < 1) {
+    texto = null; textoSuma = null; cls = 'gray'; badgeTxt = "Datos insuficientes — ASE 2016";
+  } else if (ea < 0.8 && e !== null && e < 50) {
+    texto = 'Llenado diastólico con patrón de relajación prolongada (Disfunción diastólica Grado I).'; textoSuma = 'Disfunción diastólica Grado I (relajación prolongada).'; cls = 'yellow'; badgeTxt = 'Grado I — ASE 2016';
+  } else if (ea > 2.0) {
+    texto = 'Llenado diastólico restrictivo (Disfunción diastólica Grado III).'; textoSuma = 'Disfunción diastólica Grado III (restrictivo).'; cls = 'red'; badgeTxt = 'Grado III — ASE 2016';
+  } else if (ea >= 0.8 && ea <= 2.0) {
+    if (pos >= 3)      { texto = 'Llenado diastólico restrictivo (Disfunción diastólica Grado III).'; textoSuma = 'Disfunción diastólica Grado III (restrictivo).'; cls = 'red'; badgeTxt = 'Grado III — ASE 2016'; }
+    else if (pos === 2){ texto = 'Llenado diastólico pseudonormal (Disfunción diastólica Grado II).'; textoSuma = 'Disfunción diastólica Grado II (pseudonormal).'; cls = 'orange'; badgeTxt = 'Grado II — ASE 2016'; }
+    else if (pos === 0 && disp >= 2) { texto = 'Función diastólica normal.'; textoSuma = 'Función diastólica normal.'; cls = 'green'; badgeTxt = 'Normal — ASE 2016'; }
+    else               { texto = 'Función diastólica indeterminada.'; textoSuma = 'Función diastólica indeterminada.'; cls = 'gray'; badgeTxt = 'Indeterminado — ASE 2016'; }
+  } else {
+    texto = 'Función diastólica indeterminada.'; textoSuma = 'Función diastólica indeterminada.'; cls = 'gray'; badgeTxt = 'Indeterminado — ASE 2016';
+  }
+  const dd = document.getElementById('dd-interp');
+  if (dd) dd.innerHTML = badge(cls, badgeTxt);
+  window._diastResult = { texto, textoSuma, badge: badge(cls, badgeTxt), algoritmo: 'ase2016' };
+}
+window.calcDiastolASE2016 = calcDiastolASE2016;
+
+// Dispatcher según algoritmo + ritmo seleccionados
+window.calcDiastol = function() {
+  const algo = sv('diast_algoritmo') || 'bse2024';
+  const ritmo = sv('diast_ritmo') || 'sinusal';
+  if (algo === 'ase2016') { calcDiastolASE2016(); return; }
+  if (ritmo === 'fa') {
+    const res = {
+      texto: 'Función diastólica en fibrilación auricular: no valorable por el algoritmo estándar de ritmo sinusal; se sugiere evaluación con parámetros específicos de FA (Algoritmo 3, BSE 2024).',
+      textoSuma: null,
+      badge: badge('gray', 'FA — evaluación específica pendiente'),
+      algoritmo: 'bse2024-fa'
+    };
+    const dd = document.getElementById('dd-interp');
+    if (dd) dd.innerHTML = res.badge;
+    window._diastResult = res; window._bse2024 = res;
+    return;
+  }
+  calcDiastolBSE2024();
+};
 
 function calcularBSE2024(alterada, marcadores, totalEvaluables, ee, ea, lavi) {
   if (alterada === null) {
@@ -7058,36 +7152,12 @@ function generarInforme() {
     inf.push('Sin trastornos de la contractilidad.');
   }
 
-  // ── 4. FUNCIÓN DIASTÓLICA — BSE 2024 ──
-  if (onda_e && onda_a && (e_sep || e_lat)) {
-    const eprom2 = (e_sep && e_lat) ? (e_sep + e_lat) / 2 : null;
-    const ee2 = eprom2 ? (onda_e / eprom2) : null;
-    const ea2 = onda_e / onda_a;
-    let alterada2 = null;
-    if (e_sep && e_lat) alterada2 = eprom2 <= 6.5;
-    else if (e_sep && !e_lat) alterada2 = e_sep <= 6;
-    else if (e_lat && !e_sep) alterada2 = e_lat <= 7;
-
-    let marcadores2 = 0;
-    if (ee2 !== null && ee2 > 14) marcadores2++;
-    if (ea2 <= 0.8 || ea2 >= 2.0) marcadores2++;
-    let lavi2 = null;
-    if (ai_vol && bsa) { lavi2 = ai_vol / bsa; if (lavi2 > 34) marcadores2++; }
-
-    const sglVal = v('sgl');
-    const feviReducida2 = (fevi !== null && fevi < 50) || (sglVal !== null && Math.abs(sglVal) < 16);
-    let resBSE;
-    if (feviReducida2) {
-      const trv2 = v('vmax_it');
-      let marcadoresFR2 = 0, totalFR2 = 0;
-      if (ee2 !== null) { totalFR2++; if (ee2 > 14) marcadoresFR2++; }
-      if (trv2 !== null) { totalFR2++; if (trv2 > 2.8) marcadoresFR2++; }
-      if (ai_vol && bsa) { totalFR2++; if ((ai_vol/bsa) > 34) marcadoresFR2++; }
-      resBSE = calcularBSE2024_FEVIreducida(marcadoresFR2, totalFR2, ee2, trv2, (ai_vol && bsa) ? ai_vol/bsa : null);
-    } else {
-      resBSE = calcularBSE2024(alterada2, marcadores2, 3, ee2, ea2, lavi2);
-    }
-    if (resBSE.texto) { inf.push(resBSE.texto); suma.push(resBSE.textoSuma); }
+  // ── 4. FUNCIÓN DIASTÓLICA (algoritmo seleccionable: BSE 2024 / ASE 2016) ──
+  if (typeof calcDiastol === 'function') calcDiastol();
+  const dRes = window._diastResult;
+  if (dRes && dRes.texto) {
+    inf.push(dRes.texto);
+    if (dRes.textoSuma) suma.push(dRes.textoSuma);
   } else if (fevi !== null) {
     inf.push('Función diastólica no valorada por datos insuficientes.');
   }
@@ -7604,6 +7674,10 @@ function generarPDFReal() {
   function fc(r,g,b){ doc.setFillColor(r,g,b); }
   function dc(r,g,b){ doc.setDrawColor(r,g,b); }
 
+  // ─── tema de color según centro seleccionado (TAREA 3) ───────
+  const _temaPDF = { '1':[26,58,92], '2':[26,92,58], '3':[74,26,122], '4':[123,45,66] };
+  const TEMA = _temaPDF[String(localStorage.getItem('centro_tipo_activo') || '1')] || _temaPDF['1'];
+
   // ─── data readers (uses global sv/v) ─────────────────────────
   const bsa = getBSA();
   const medNombre    = sv('med-nombre');
@@ -7616,7 +7690,7 @@ function generarPDFReal() {
   // ─── drawBar ──────────────────────────────────────────────────
   function drawBar(txt) {
     y += 1.5; checkPage(10);
-    fc(26,46,74); doc.rect(mL,y,pgW,7,'F');
+    fc(TEMA[0],TEMA[1],TEMA[2]); doc.rect(mL,y,pgW,7,'F');
     fb(8.5); tc(255,255,255);
     doc.text(txt, mL+5, y+5);
     y += 8.5;
@@ -7751,7 +7825,7 @@ function generarPDFReal() {
   // 1. ENCABEZADO
   // ════════════════════════════════════════════════════════════
   const hdrH = 22;
-  fc(26,46,74); doc.rect(0,0,210,hdrH,'F');
+  fc(TEMA[0],TEMA[1],TEMA[2]); doc.rect(0,0,210,hdrH,'F');
   // ECG trace (blended ~35% opacity: #31547b)
   dc(49,84,123); doc.setLineWidth(0.6);
   const ecg=[[0,14],[20,14],[28,14],[30,6],[32,22],[34,6],[36,14],[50,14],[52,11],[54,14],[70,14],[72,11],[74,14],[210,14]];
@@ -7794,7 +7868,7 @@ function generarPDFReal() {
       row.forEach((cell,ci)=>{
         if(!cell.val) return;
         const cx=mL+ci*colW+2;
-        fb(7); tc(26,46,74); doc.text(cell.lbl+': ',cx,ry+4.3);
+        fb(7); tc(TEMA[0],TEMA[1],TEMA[2]); doc.text(cell.lbl+': ',cx,ry+4.3);
         const lw=doc.getTextWidth(cell.lbl+': ');
         fn(7.5); tc(13,13,13); doc.text(String(cell.val),cx+lw,ry+4.3,{maxWidth:colW-lw-3});
       });
@@ -8009,7 +8083,7 @@ function generarPDFReal() {
   if (sumaTxt) {
     drawBar('EN SUMA:');
     y += 2;
-    fi(8); tc(26,46,74);
+    fi(8); tc(TEMA[0],TEMA[1],TEMA[2]);
     const sL = doc.splitTextToSize(sumaTxt, pgW-4);
     sL.forEach(l=>{ checkPage(6); doc.text(l,mL+2,y); y+=5.5; });
     y += 3;
@@ -8617,7 +8691,7 @@ function saveCentro() {
   localStorage.setItem('centro_nombre', sv('centro_nombre'));
 }
 function loadCentro() {
-  [1,2,3].forEach(idx => {
+  [1,2,3,4].forEach(idx => {
     const saved = localStorage.getItem('centro_label_' + idx);
     const label = document.getElementById('centro_label_' + idx);
     if (saved && label) label.textContent = saved;
