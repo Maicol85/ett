@@ -795,6 +795,10 @@ function closeIntro() {
           <label>Vol latido (ml)</label>
           <input type="number" id="vol_lat" placeholder="ml">
         </div>
+        <div class="fg">
+          <label>VDFVI (ml)</label>
+          <input type="number" id="vdfvi" placeholder="ml" oninput="calcVI()">
+        </div>
       </div>
       <div class="calc-box">
         <div class="calc-row">
@@ -804,6 +808,10 @@ function closeIntro() {
         <div class="calc-row">
           <span class="calc-lbl">Índice Devereux (g/m²)</span>
           <span class="calc-val" id="devereux-val">—</span>
+        </div>
+        <div class="calc-row">
+          <span class="calc-lbl">VDFVI indexado (ml/m²)</span>
+          <span id="vdfvi-idx-interp">—</span>
         </div>
         <div class="calc-row">
           <span class="calc-lbl">RWT</span>
@@ -882,6 +890,10 @@ function closeIntro() {
         <div class="calc-row">
           <span class="calc-lbl">S' — función sistólica VD</span>
           <span id="sprime-interp">—</span>
+        </div>
+        <div class="calc-row">
+          <span class="calc-lbl">TAP — aceleración pulmonar</span>
+          <span id="tap-interp">—</span>
         </div>
       </div>
     </div>
@@ -995,6 +1007,58 @@ function closeIntro() {
         </div>
       </div>
 
+    </div>
+  </div>
+  </div>
+
+  <div class="card" style="margin-bottom:6px;">
+    <div class="card-head" style="cursor:pointer;user-select:none;" onclick="toggleCard('htp2022-seccion',this)">
+      🫁 Valoración ecocardiográfica de HTP (ESC 2022)
+      <span id="htp2022-arrow" style="float:right;transition:transform 0.2s;">▶</span>
+    </div>
+  </div>
+  <div id="htp2022-seccion" style="display:none;">
+  <div class="card">
+    <div class="card-body">
+      <p style="font-size:11px;color:var(--text2);margin-bottom:12px;">Probabilidad de HTP según VRT + signos ecocardiográficos en 3 categorías (ESC/ERS 2022). Los signos derivables de datos ya ingresados se toman automáticamente.</p>
+
+      <!-- Paso 1 -->
+      <div style="font-size:12px;font-weight:700;color:var(--accent2);margin:0 0 6px;">Paso 1 — Velocidad de regurgitación tricuspídea (VRT)</div>
+      <div class="grid-2" style="margin-bottom:12px;">
+        <div class="fg"><label>VRT</label>
+          <select id="htp2022_vrt" onchange="calcHTP2022()">
+            <option value="auto">Automático (según IT ingresada)</option>
+            <option value="baja">&lt; 2.8 m/s</option>
+            <option value="media">2.8–3.4 m/s</option>
+            <option value="alta">&gt; 3.4 m/s</option>
+            <option value="nomedible">No medible</option>
+          </select>
+        </div>
+        <div class="fg"><label>VRT considerada</label><div style="padding-top:8px;" id="htp2022-vrt-interp">—</div></div>
+      </div>
+
+      <!-- Paso 2 -->
+      <div style="font-size:12px;font-weight:700;color:var(--accent2);margin:0 0 6px;">Paso 2 — Signos adicionales</div>
+      <div style="font-size:11px;font-weight:700;color:var(--text);margin:4px 0 2px;">A · Ventrículos</div>
+      <div style="font-size:12px;margin:2px 0;color:var(--text2);">VD basal &gt; 41 mm · VD/VI &gt; 1.0 — <i>automático según datos</i></div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin:2px 0;"><input type="checkbox" id="htp2022_a3" onchange="calcHTP2022()"> Aplanamiento septal (IEVI &gt; 1.1 en sístole/diástole)</label>
+      <div style="font-size:11px;font-weight:700;color:var(--text);margin:8px 0 2px;">B · Arteria pulmonar</div>
+      <div style="font-size:12px;margin:2px 0;color:var(--text2);">TAP &lt; 105 ms — <i>automático</i></div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin:2px 0;"><input type="checkbox" id="htp2022_b1muesca" onchange="calcHTP2022()"> Muesca mesosistólica del flujo pulmonar</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin:2px 0;"><input type="checkbox" id="htp2022_b2" onchange="calcHTP2022()"> Velocidad de regurgitación pulmonar diastólica &gt; 2.2 m/s</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin:2px 0;"><input type="checkbox" id="htp2022_b3" onchange="calcHTP2022()"> Diámetro AP &gt; diámetro Ao o AP &gt; 25 mm</label>
+      <div style="font-size:11px;font-weight:700;color:var(--text);margin:8px 0 2px;">C · VCI / AD</div>
+      <div style="font-size:12px;margin:2px 0;color:var(--text2);">VCI &gt; 21 mm con colapso &lt; 50% · AD telesistólica &gt; 18 cm² · TAPSE/PSAP &lt; 0.55 — <i>automático según datos</i></div>
+
+      <!-- Paso 3 -->
+      <div class="calc-box" style="margin-top:12px;">
+        <div style="font-size:11px;font-weight:700;color:var(--accent2);margin-bottom:8px;">Paso 3 — Probabilidad ESC 2022</div>
+        <div class="calc-row"><span class="calc-lbl">Categoría A — Ventrículos</span><span id="htp2022-catA">—</span></div>
+        <div class="calc-row"><span class="calc-lbl">Categoría B — Arteria pulmonar</span><span id="htp2022-catB">—</span></div>
+        <div class="calc-row"><span class="calc-lbl">Categoría C — VCI / AD</span><span id="htp2022-catC">—</span></div>
+        <div style="border-top:1px solid var(--border);margin:8px 0;"></div>
+        <div class="calc-row"><span class="calc-lbl" style="font-weight:700;">Probabilidad de HTP</span><span id="htp2022-prob" style="font-weight:700;">—</span></div>
+      </div>
     </div>
   </div>
   </div>
@@ -5934,9 +5998,26 @@ function calcAI() {
 }
 
 // ══ VI ══
+// Severidad de HVI por masa indexada (cortes ASE, por sexo)
+function hviSeveridad(idx, sexo) {
+  idx = parseFloat(idx);
+  if (sexo === 'F') { if (idx >= 122) return 'severa'; if (idx >= 109) return 'moderada'; if (idx >= 96) return 'leve'; return null; }
+  if (idx >= 149) return 'severa'; if (idx >= 132) return 'moderada'; if (idx >= 116) return 'leve'; return null;
+}
+// Interpretación de VDFVI indexado (cortes ASE, por sexo)
+function vdfviInterp(idx, sexo) {
+  idx = parseFloat(idx);
+  const c = sexo === 'F' ? [61,70,80] : [74,89,100];
+  if (idx > c[2]) return {txt:'severamente dilatado', cls:'red'};
+  if (idx > c[1]) return {txt:'moderadamente dilatado', cls:'orange'};
+  if (idx > c[0]) return {txt:'levemente dilatado', cls:'yellow'};
+  return {txt:'normal', cls:'green'};
+}
+
 function calcVI() {
   const dd = v('ddfvi'), ds = v('dsfvi'), siv = v('siv'), pp = v('ppvi'), fevi = v('fevi');
   const bsa = getBSA();
+  const sexo = sv('sexo');
 
   // FA
   if (dd && ds) {
@@ -5949,37 +6030,48 @@ function calcVI() {
     const mass = 0.8 * (1.04 * ((dd/10 + siv/10 + pp/10) ** 3 - (dd/10) ** 3)) + 0.6;
     if (bsa) {
       const idx = (mass / bsa).toFixed(0);
-      document.getElementById('devereux-val').textContent = idx + ' g/m²';
-      const sexo = sv('sexo');
-      const hvi = (sexo === 'F' && idx > 95) || (sexo === 'M' && idx > 115) || (!sexo && idx > 115);
+      const hvi = (sexo === 'F' && idx > 95) || (sexo !== 'F' && idx > 115);
       document.getElementById('devereux-val').innerHTML = idx + ' g/m² ' + (hvi ? badge('red','HVI') : badge('green','Normal'));
     } else {
       document.getElementById('devereux-val').textContent = mass.toFixed(0) + ' g (sin BSA)';
     }
 
-    // RWT
+    // RWT + Geometría (con severidad de HVI)
     if (dd) {
       const rwt = (2 * pp / dd).toFixed(2);
       document.getElementById('rwt-val').textContent = rwt;
-      const massIdx = bsa ? (0.8 * (1.04 * ((dd/10 + siv/10 + pp/10) ** 3 - (dd/10) ** 3)) + 0.6) / bsa : null;
-      const hvi2 = massIdx && ((sv('sexo') === 'F' && massIdx > 95) || massIdx > 115);
-      let geom;
-      if (!hvi2 && rwt < 0.42) geom = badge('green','Geometría normal');
-      else if (!hvi2 && rwt >= 0.42) geom = badge('yellow','Remodelado concéntrico');
-      else if (hvi2 && rwt < 0.42) geom = badge('orange','HVI excéntrica');
-      else geom = badge('red','HVI concéntrica');
-      document.getElementById('rwt-val').textContent = rwt;
-      document.getElementById('geom-val').innerHTML = geom;
+      const massIdx = bsa ? (mass / bsa) : null;
+      const hvi2 = massIdx && ((sexo === 'F' && massIdx > 95) || (sexo !== 'F' && massIdx > 115));
+      let geomTxt, geomCls;
+      if (!hvi2 && rwt < 0.42) { geomTxt = 'Geometría normal'; geomCls = 'green'; }
+      else if (!hvi2 && rwt >= 0.42) { geomTxt = 'Remodelado concéntrico'; geomCls = 'yellow'; }
+      else if (hvi2 && rwt < 0.42) { geomTxt = 'HVI excéntrica'; geomCls = 'orange'; }
+      else { geomTxt = 'HVI concéntrica'; geomCls = 'red'; }
+      if (hvi2) { const sev = hviSeveridad(massIdx, sexo); if (sev) geomTxt += ` (${sev})`; }
+      document.getElementById('geom-val').innerHTML = badge(geomCls, geomTxt);
     }
   }
 
-  // FEVI
+  // VDFVI indexado + interpretación de dilatación (ASE)
+  const vdfvi = v('vdfvi');
+  const vdfviEl = document.getElementById('vdfvi-idx-interp');
+  if (vdfviEl) {
+    if (vdfvi && bsa) {
+      const vidx = (vdfvi / bsa).toFixed(1);
+      const it = vdfviInterp(vidx, sexo);
+      vdfviEl.innerHTML = vidx + ' ml/m² ' + badge(it.cls, it.txt);
+    } else {
+      vdfviEl.textContent = '—';
+    }
+  }
+
+  // FEVI (cortes actualizados)
   if (fevi !== null) {
     let fi;
-    if (fevi >= 55) fi = badge('green', 'Conservada (≥55%)');
-    else if (fevi >= 50) fi = badge('yellow', 'Levemente reducida (50-54%)');
-    else if (fevi >= 40) fi = badge('orange', 'Moderadamente reducida (40-49%)');
-    else fi = badge('red', 'Severamente reducida (<40%)');
+    if (fevi >= 50) fi = badge('green', 'Normal (≥50%)');
+    else if (fevi >= 40) fi = badge('yellow', 'Levemente reducida (40-49%)');
+    else if (fevi >= 30) fi = badge('orange', 'Moderadamente reducida (30-39%)');
+    else fi = badge('red', 'Severamente reducida (<30%)');
     document.getElementById('fevi-interp').innerHTML = fi;
   }
 }
@@ -6017,7 +6109,17 @@ function calcVD() {
     let t = sp >= 10 ? badge('green','Normal (≥10 cm/s)') : badge('red','Disfunción (< 10 cm/s)');
     document.getElementById('sprime-interp').innerHTML = t;
   }
+  // TAP — aceleración pulmonar (elemento indirecto de HTP si < 105 ms)
+  const tap = v('tvia');
+  const tapEl = document.getElementById('tap-interp');
+  if (tapEl) {
+    if (tap === null) tapEl.textContent = '—';
+    else tapEl.innerHTML = tap < 105
+      ? badge('red', `${tap} ms — elemento indirecto de HTP (<105 ms)`)
+      : badge('green', `${tap} ms — normal (≥105 ms)`);
+  }
   if (typeof calcTEP === 'function') calcTEP();
+  if (typeof calcHTP2022 === 'function') calcHTP2022();
 }
 
 // ══ AD / PmAD ══
@@ -6026,6 +6128,7 @@ function calcAD() {
   if (!ad) return;
   let t = ad <= 18 ? badge('green','Normal (≤18cm²)') : badge('yellow','Dilatada (>18cm²)');
   document.getElementById('ad-interp').innerHTML = t;
+  if (typeof calcHTP2022 === 'function') calcHTP2022();
 }
 
 // ══ TEP / Sobrecarga VD aguda ══
@@ -6168,6 +6271,47 @@ function calcTEP() {
 }
 window.calcTEP = calcTEP;
 
+// ══ HTP — probabilidad ecocardiográfica (ESC 2022) ══
+function calcHTP2022() {
+  const selEl = document.getElementById('htp2022_vrt');
+  const vrtSel = selEl ? selEl.value : 'auto';
+  const vit = v('vmax_it');
+  let vrtCat;
+  if (vrtSel === 'auto') {
+    if (vit === null) vrtCat = 'nomedible';
+    else if (vit < 2.8) vrtCat = 'baja';
+    else if (vit <= 3.4) vrtCat = 'media';
+    else vrtCat = 'alta';
+  } else vrtCat = vrtSel;
+
+  const chk = id => { const el = document.getElementById(id); return el ? el.checked : false; };
+  const vdBas = v('vd_bas'), vdvi = v('vd_vi'), tap = v('tvia');
+  const vciD = v('vci_diam'), vciCol = sv('vci_col'), adA = v('ad_area');
+  const tapse = v('tapse'), psap = v('psap_calc');
+  const tapsePsap = (tapse && psap) ? tapse / psap : null;
+
+  const catA = (vdBas !== null && vdBas > 41) || (vdvi !== null && vdvi > 1.0) || chk('htp2022_a3');
+  const catB = (tap !== null && tap < 105) || chk('htp2022_b1muesca') || chk('htp2022_b2') || chk('htp2022_b3');
+  const catC = (vciD !== null && vciD > 21 && vciCol === '<50') || (adA !== null && adA > 18) || (tapsePsap !== null && tapsePsap < 0.55);
+  const nCat = (catA ? 1 : 0) + (catB ? 1 : 0) + (catC ? 1 : 0);
+
+  let prob, cls;
+  if (vrtCat === 'baja')      { prob = (nCat >= 2) ? 'INTERMEDIA' : 'BAJA';  cls = (nCat >= 2) ? 'yellow' : 'green'; }
+  else if (vrtCat === 'media'){ prob = (nCat >= 2) ? 'ALTA' : 'INTERMEDIA'; cls = (nCat >= 2) ? 'red' : 'yellow'; }
+  else if (vrtCat === 'alta') { prob = 'ALTA'; cls = 'red'; }
+  else                        { prob = (nCat >= 2) ? 'INTERMEDIA' : 'INDETERMINADA'; cls = (nCat >= 2) ? 'yellow' : 'gray'; }
+
+  const vrtTxt = {baja:'VRT < 2.8 m/s', media:'VRT 2.8–3.4 m/s', alta:'VRT > 3.4 m/s', nomedible:'VRT no medible'}[vrtCat];
+  const set = (id, html) => { const e = document.getElementById(id); if (e) e.innerHTML = html; };
+  set('htp2022-vrt-interp', vrtTxt + (vrtSel === 'auto' && vit !== null ? ` (IT ${vit} m/s)` : ''));
+  set('htp2022-catA', catA ? badge('yellow','signo presente') : '—');
+  set('htp2022-catB', catB ? badge('yellow','signo presente') : '—');
+  set('htp2022-catC', catC ? badge('yellow','signo presente') : '—');
+  set('htp2022-prob', badge(cls, 'Probabilidad ' + prob));
+  window._htp2022 = { vrtCat, vrtTxt, catA, catB, catC, nCat, prob };
+}
+window.calcHTP2022 = calcHTP2022;
+
 function calcPmAD() {
   const diam = v('vci_diam'), col = sv('vci_col');
   const pmadInterp = document.getElementById('pmad-interp');
@@ -6225,6 +6369,7 @@ function calcPSAP() {
     if (htpEl)  htpEl.innerHTML = '—';
   }
   if (typeof calcTEP === 'function') calcTEP();
+  if (typeof calcHTP2022 === 'function') calcHTP2022();
 }
 
 // ══ DIASTOL ══
@@ -6866,9 +7011,9 @@ function generarInforme() {
   // ── 2. FUNCIÓN SISTÓLICA (FEVI) ──
   if (fevi !== null) {
     let feviConcepto, feviSuma, feviNarr, feviTail;
-    if (fevi >= 55) { feviConcepto = 'conservada'; feviSuma = `FEVI conservada (${fevi}%).`; feviNarr = 'conservada'; feviTail = ', sin evidencia de compromiso de la función sistólica global'; }
-    else if (fevi >= 50) { feviConcepto = 'levemente reducida'; feviSuma = `FEVI levemente reducida (${fevi}%).`; feviNarr = 'levemente reducida'; feviTail = ', compatible con disfunción sistólica leve'; }
-    else if (fevi >= 40) { feviConcepto = 'moderadamente reducida'; feviSuma = `FEVI moderadamente reducida (${fevi}%).`; feviNarr = 'moderadamente reducida'; feviTail = ', compatible con disfunción sistólica moderada'; }
+    if (fevi >= 50) { feviConcepto = 'normal'; feviSuma = `FEVI normal (${fevi}%).`; feviNarr = 'conservada'; feviTail = ', sin evidencia de compromiso de la función sistólica global'; }
+    else if (fevi >= 40) { feviConcepto = 'levemente reducida'; feviSuma = `FEVI levemente reducida (${fevi}%).`; feviNarr = 'levemente reducida'; feviTail = ', compatible con disfunción sistólica leve'; }
+    else if (fevi >= 30) { feviConcepto = 'moderadamente reducida'; feviSuma = `FEVI moderadamente reducida (${fevi}%).`; feviNarr = 'moderadamente reducida'; feviTail = ', compatible con disfunción sistólica moderada'; }
     else { feviConcepto = 'severamente reducida'; feviSuma = `FEVI severamente reducida (${fevi}%).`; feviNarr = 'severamente comprometida'; feviTail = ', compatible con miocardiopatía con disfunción sistólica severa'; }
     const metodo = sv('fevi_met') || 'Simpson biplano';
     const c2 = `FEVI ${feviConcepto} (${fevi}%).`;
@@ -6936,8 +7081,13 @@ function generarInforme() {
     if (geom === 'normal') {
       inf.push('Geometría ventricular normal.');
     } else {
-      inf.push(`${geom.charAt(0).toUpperCase() + geom.slice(1)}.`);
-      suma.push(`HVI — ${geom}.`);
+      let geomTxt = geom;
+      if (hvi) {
+        const sev = (typeof hviSeveridad === 'function') ? hviSeveridad(massIdx, sexo) : null;
+        if (sev) geomTxt += ` (${sev})`;
+      }
+      inf.push(`${geomTxt.charAt(0).toUpperCase() + geomTxt.slice(1)}.`);
+      suma.push(`HVI — ${geomTxt}.`);
     }
   }
 
@@ -7054,22 +7204,26 @@ function generarInforme() {
   if (etDesc) suma.push(`ET ${etDesc}.`);
   const etFrag = etDesc ? `Estenosis tricuspídea ${etDesc}. ` : '';
 
+  const tapBajo = tap !== null && tap < 105;
   if (hayIT) {
     const itGrad = itG > 0 ? ` ${imTxt[itG]}` : '';
     suma.push(itG > 0 ? `IT ${imTxt[itG]}.` : 'IT presente.');
+    let tricLine;
     if (gradVDAD !== null && pmadV !== null && psap) {
       // Con IT + con VCI
-      inf.push(`${etFrag}IT${itGrad} con gradiente VD-AD de ${gradVDAD} mmHg, PSAP estimada de ${psap} mmHg (PmAD ${pmadV} mmHg).`);
+      tricLine = `${etFrag}IT${itGrad} con gradiente VD-AD de ${gradVDAD} mmHg, PSAP estimada de ${psap} mmHg (PmAD ${pmadV} mmHg).`;
     } else if (gradVDAD !== null) {
       // Con IT + sin VCI (hay VRT pero no PmAD/PSAP)
-      inf.push(`${etFrag}IT${itGrad} con gradiente VD-AD de ${gradVDAD} mmHg. PSAP no calculable sin medición de VCI.`);
+      tricLine = `${etFrag}IT${itGrad} con gradiente VD-AD de ${gradVDAD} mmHg. PSAP no calculable sin medición de VCI.`;
     } else {
       // IT graduada sin VRT registrada
-      inf.push(`${etFrag}Insuficiencia tricuspídea${itGrad}. Sin registro de velocidad de regurgitación que permita estimar PSAP.`);
+      tricLine = `${etFrag}Insuficiencia tricuspídea${itGrad}. Sin registro de velocidad de regurgitación que permita estimar PSAP.`;
     }
+    if (tapBajo) tricLine += ` Se suman elementos indirectos de hipertensión pulmonar dado por TAP < 105 ms.`;
+    inf.push(tricLine);
   } else {
-    if (tap !== null && tap < 105) {
-      inf.push(`${etFrag}Sin insuficiencia tricuspídea valorable. Elementos indirectos de HTP dado por TAP < 105 ms.`);
+    if (tapBajo) {
+      inf.push(`${etFrag}No se obtiene valor de PSAP por ausencia de insuficiencia tricuspídea valorable. Se evidencian elementos indirectos de hipertensión pulmonar dado por TAP < 105 ms.`);
     } else {
       inf.push(`${etFrag}Válvula tricúspide sin insuficiencia valorable. No es posible estimar PSAP.`);
     }
@@ -7108,6 +7262,20 @@ function generarInforme() {
       inf.push(estiloPick(cH, eH, nH));
       suma.push(`HTP ${htpGr} (PSAP ${psap} mmHg).`);
     }
+  }
+
+  // ── HTP — PROBABILIDAD ECOCARDIOGRÁFICA (ESC 2022) ──
+  if (typeof calcHTP2022 === 'function') calcHTP2022();
+  const h22 = window._htp2022;
+  if (h22 && (h22.vrtCat !== 'nomedible' || h22.nCat > 0)) {
+    const cats = [];
+    if (h22.catA) cats.push('ventrículos');
+    if (h22.catB) cats.push('arteria pulmonar');
+    if (h22.catC) cats.push('VCI/AD');
+    let l = `Valoración ecocardiográfica de probabilidad de hipertensión pulmonar (ESC 2022): probabilidad ${h22.prob.toLowerCase()} (${h22.vrtTxt}`;
+    l += cats.length ? `; signos adicionales en: ${cats.join(', ')}).` : '; sin signos adicionales).';
+    inf.push(l);
+    if (h22.prob === 'ALTA' || h22.prob === 'INTERMEDIA') suma.push(`HTP: probabilidad ${h22.prob.toLowerCase()} (ESC 2022).`);
   }
 
   // ── TEP / DISFUNCIÓN VD AGUDA ──
