@@ -8834,26 +8834,46 @@ function contrDibujarVistaApical(svgId, paredIzq, paredDer, bordeExtra, numeros)
   if (numeros) {
     const yB = CONTR_G.yBottom;
     const apexI = CONTR_G.apexI;
-    // Centros Y de cada nivel (fracción media del rango)
-    const centrosY = [
-      yB - 0.15*(yB-apexI),   // basal  (f 0–0.30)
-      yB - 0.46*(yB-apexI),   // mid    (f 0.30–0.62)
-      yB - 0.81*(yB-apexI)    // apical (f 0.62–1.0)
-    ];
-    const xIzq = 58, xDer = 182;
-    const estilo = `font-size="15" font-weight="700" fill="#e8ecf4"
-      text-anchor="middle" dominant-baseline="middle" pointer-events="none"`;
-    // Izquierda
+
+    // Función para encontrar x del borde en un Y dado
+    function xEnY(pts, targetY) {
+      const sorted = pts.slice().sort((a,b) => b[1]-a[1]);
+      for (let i = 0; i < sorted.length-1; i++) {
+        if (sorted[i][1] >= targetY && sorted[i+1][1] <= targetY) {
+          const r = (targetY - sorted[i][1]) / (sorted[i+1][1] - sorted[i][1]);
+          return sorted[i][0] + r * (sorted[i+1][0] - sorted[i][0]);
+        }
+      }
+      return sorted[0][0];
+    }
+
+    // Centro Y de cada nivel (fracción media del rango inner)
+    const centrosFrac = [0.15, 0.46, 0.81];
+    const centrosY = centrosFrac.map(f => yB - f*(yB-apexI));
+
+    // Estilo adaptativo: stroke de fondo para legibilidad día/noche
+    const labelStyle = `font-size="13" font-weight="700"
+      text-anchor="middle" dominant-baseline="middle"
+      pointer-events="none" paint-order="stroke"
+      stroke="var(--bg2)" stroke-width="3.5"
+      fill="var(--text)"`;
+
     [0,1,2].forEach(i => {
-      html += `<text x="${xIzq}" y="${centrosY[i]}" ${estilo}>${numeros.izq[i]}</text>`;
+      const y = centrosY[i];
+      // X real del miocardio: promedio entre pared externa e interna
+      const xOL = xEnY(outerL, y);
+      const xIL = xEnY(innerL, y);
+      const xOR = xEnY(outerR, y);
+      const xIR = xEnY(innerR, y);
+      const xL = (xOL + xIL) / 2;
+      const xR = (xOR + xIR) / 2;
+      html += `<text x="${xL.toFixed(1)}" y="${centrosY[i].toFixed(1)}" ${labelStyle}>${numeros.izq[i]}</text>`;
+      html += `<text x="${xR.toFixed(1)}" y="${centrosY[i].toFixed(1)}" ${labelStyle}>${numeros.der[i]}</text>`;
     });
-    // Derecha
-    [0,1,2].forEach(i => {
-      html += `<text x="${xDer}" y="${centrosY[i]}" ${estilo}>${numeros.der[i]}</text>`;
-    });
-    // Apex
+
+    // Apex — centro entre apexO y apexI
     const yApex = CONTR_G.apexO + (apexI - CONTR_G.apexO) * 0.5;
-    html += `<text x="120" y="${yApex}" ${estilo}>${numeros.apex}</text>`;
+    html += `<text x="120" y="${yApex.toFixed(1)}" ${labelStyle}>${numeros.apex}</text>`;
   }
 
   svg.innerHTML = html;
