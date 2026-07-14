@@ -326,7 +326,7 @@ window.cerrarSesion = cerrarSesion;
 <header>
   <div class="hdr-icon">🫀</div>
   <div>
-    <div class="hdr-title">Ecocardiograma Doppler Color</div>
+    <div class="hdr-title">Ecocardiograma Doppler Color <span id="autosave-indicator" style="color:var(--text2);font-size:11px;font-weight:400;opacity:0;transition:opacity .4s">● Guardado</span></div>
     <div class="hdr-sub">
       <!-- hidden contenteditable spans keep sv() and saveMedico() working -->
       <span id="med-nombre" contenteditable="true" onblur="saveMedico()" style="display:none;">Dr. Maicol Dos Santos</span>
@@ -1258,7 +1258,37 @@ function closeIntro() {
       </div>
       <div class="grid-2" style="margin-bottom:8px;">
         <div class="fg"><label>Morfología VM</label>
-          <select id="vm_morf"><option>Normal</option><option>Mixomatosa</option><option>Calcificada</option><option>Reumática</option><option>Prolapso</option><option>Prótesis</option></select>
+          <select id="vm_morf" onchange="showProlapsoPanel()"><option>Normal</option><option>Mixomatosa / Barlow</option><option>Calcificada</option><option>Reumática</option><option>Prolapso / EVMS</option><option>Prótesis</option></select>
+        </div>
+        <div id="bloque-prolapso-vm" class="fg" style="display:none;">
+          <label style="font-weight:600">🔍 Detalle morfológico — Prolapso / Barlow</label>
+          <div style="margin-bottom:6px">
+            <label style="font-size:11px">Mecanismo Carpentier</label>
+            <select id="vm_carpentier"><option>—</option><option>Tipo I (dilatación anular)</option><option>Tipo II (prolapso/flail)</option><option>Tipo III (restricción)</option></select>
+          </div>
+          <div style="font-size:11px;margin:4px 0 2px">Segmento(s) afectado(s):</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px">
+            <label><input type="checkbox" id="vm_seg_a1"> A1</label>
+            <label><input type="checkbox" id="vm_seg_a2"> A2</label>
+            <label><input type="checkbox" id="vm_seg_a3"> A3</label>
+            <label><input type="checkbox" id="vm_seg_p1"> P1</label>
+            <label><input type="checkbox" id="vm_seg_p2"> P2</label>
+            <label><input type="checkbox" id="vm_seg_p3"> P3</label>
+            <label><input type="checkbox" id="vm_seg_ca"> Comisura ant.</label>
+            <label><input type="checkbox" id="vm_seg_cp"> Comisura post.</label>
+          </div>
+          <div style="margin:6px 0">
+            <label style="font-size:11px">Extensión prolapso (mm)</label>
+            <input type="number" id="vm_prolapso_mm" placeholder="mm">
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px">
+            <label><input type="checkbox" id="vm_flail"> Flail</label>
+            <label><input type="checkbox" id="vm_rotura_cuerdas"> Rotura de cuerdas</label>
+            <label><input type="checkbox" id="vm_elongacion_cuerdas"> Elongación de cuerdas</label>
+            <label><input type="checkbox" id="vm_calc_anular"> Calcificación anular</label>
+            <label><input type="checkbox" id="vm_engros_valvar"> Engrosamiento valvar &gt;5mm</label>
+            <label><input type="checkbox" id="vm_exceso_tejido"> Exceso de tejido</label>
+          </div>
         </div>
         <div id="bloque-esten-mitral" style="display:none;">
         <div class="fg"><label>Estenosis mitral — grado final</label>
@@ -1668,6 +1698,41 @@ function closeIntro() {
       </div>
       <div class="fg" style="margin-top:8px;"><label>Notas adicionales</label>
         <textarea id="otras_notas" placeholder="Masa, trombo, DSA/DSV, anomalías congénitas..."></textarea>
+      </div>
+      <div class="fg" style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px;">
+        <label style="font-weight:600">🫀 Masa intracardíaca — descripción estructurada</label>
+        <select id="masa_presente" onchange="showMasaPanel()">
+          <option>No se detectan masas</option>
+          <option>Masa / imagen intracardíaca presente</option>
+        </select>
+      </div>
+      <div id="bloque-masa" style="display:none;margin-top:8px;">
+        <div class="grid-2">
+          <div class="fg"><label>Cavidad</label>
+            <select id="masa_cavidad"><option>VI</option><option>VD</option><option>AI</option><option>AD</option><option>Múltiples</option></select>
+          </div>
+          <div class="fg"><label>Localización</label>
+            <select id="masa_loc"><option>Pared libre</option><option>Septo</option><option>Válvula</option><option>Tracto de salida</option><option>Tracto de entrada</option><option>Auricular (orejuela)</option><option>Otro</option></select>
+          </div>
+          <div class="fg"><label>Tamaño (mm)</label>
+            <input type="number" id="masa_tam_mm" placeholder="mm">
+          </div>
+          <div class="fg"><label>Morfología</label>
+            <select id="masa_morf"><option>Pediculada</option><option>Sésil</option><option>Irregular</option><option>Redondeada</option></select>
+          </div>
+          <div class="fg"><label>Movilidad</label>
+            <select id="masa_movil"><option>Móvil</option><option>Semimóvil</option><option>Fija</option></select>
+          </div>
+          <div class="fg"><label>Ecogenicidad</label>
+            <select id="masa_eco"><option>Hiperecogénica</option><option>Hipoecoica</option><option>Mixta</option><option>Con calcificación</option></select>
+          </div>
+          <div class="fg"><label>Diagnóstico diferencial sugerido</label>
+            <select id="masa_dx"><option>Trombo</option><option>Mixoma</option><option>Fibroelastoma</option><option>Vegetación</option><option>Lipoma</option><option>Metástasis</option><option>Indeterminado</option></select>
+          </div>
+        </div>
+        <div class="fg" style="margin-top:8px;"><label>Notas adicionales</label>
+          <textarea id="masa_notas" placeholder="Detalles adicionales de la masa..."></textarea>
+        </div>
       </div>
     </div>
   </div>
@@ -10291,6 +10356,22 @@ function generarInforme() {
         `Válvula mitral de morfología ${vmMorf.toLowerCase()}, con ${joinEY(partsE)}.`,
         `La válvula mitral presenta morfología ${vmMorf.toLowerCase()} con ${joinEY(partsE)}, hallazgo de relevancia clínica que requiere seguimiento ecocardiográfico periódico y evaluación de indicación de intervención según evolución clínica.`));
     }
+    // Detalle de prolapso / Barlow
+    if (vmMorf === 'Prolapso / EVMS' || vmMorf === 'Mixomatosa / Barlow') {
+      const _segs = [['vm_seg_a1','A1'],['vm_seg_a2','A2'],['vm_seg_a3','A3'],['vm_seg_p1','P1'],['vm_seg_p2','P2'],['vm_seg_p3','P3'],['vm_seg_ca','comisura anterior'],['vm_seg_cp','comisura posterior']]
+        .filter(s => { const el = document.getElementById(s[0]); return el && el.checked; }).map(s => s[1]);
+      const _carp = sv('vm_carpentier');
+      const _mm = (document.getElementById('vm_prolapso_mm') || {}).value || '';
+      const _hall = [['vm_flail','flail'],['vm_rotura_cuerdas','rotura de cuerdas'],['vm_elongacion_cuerdas','elongación de cuerdas'],['vm_calc_anular','calcificación anular'],['vm_engros_valvar','engrosamiento valvar >5mm'],['vm_exceso_tejido','exceso de tejido']]
+        .filter(h => { const el = document.getElementById(h[0]); return el && el.checked; }).map(h => h[1]);
+      let _fr = (vmMorf === 'Prolapso / EVMS') ? 'Prolapso mitral' : 'Enfermedad mixomatosa (Barlow)';
+      if (_segs.length) _fr += ' segmento' + (_segs.length > 1 ? 's' : '') + ' ' + _segs.join(', ');
+      if (_carp && _carp !== '—') _fr += ', mecanismo ' + _carp.replace('Tipo ', 'Carpentier ').replace(/\s*\(.*\)/, '');
+      if (_mm) _fr += ', extensión ' + _mm + 'mm';
+      if (_hall.length) { const _jy = (a) => a.reduce((ac,c,i) => i === 0 ? c : (ac + (/^[aeiouáéíóú]/i.test(c) ? ' e ' : ' y ') + c), ''); _fr += ', con ' + _jy(_hall); }
+      _fr += '.';
+      inf.push(_fr);
+    }
   }
 
   // ── VÁLVULA AÓRTICA ──
@@ -10538,6 +10619,17 @@ function generarInforme() {
   // ── NOTAS EXTRA ──
   if (sv('otras_notas')) inf.push(sv('otras_notas'));
 
+  // ── MASA INTRACARDÍACA ──
+  if (sv('masa_presente') === 'Masa / imagen intracardíaca presente') {
+    const _mtam = (document.getElementById('masa_tam_mm') || {}).value || '';
+    let _mf = 'Imagen intracardíaca en ' + sv('masa_cavidad') + ', ' + sv('masa_loc').toLowerCase() +
+      (_mtam ? ', ' + _mtam + 'mm' : '') + ', morfología ' + sv('masa_morf').toLowerCase() + ', ' +
+      sv('masa_movil').toLowerCase() + ', ' + sv('masa_eco').toLowerCase() +
+      '. Diagnóstico diferencial: ' + sv('masa_dx').toLowerCase() + '.';
+    inf.push(_mf);
+    const _mn = sv('masa_notas'); if (_mn) inf.push(_mn);
+  }
+
   // ── ETE ──
   (function() {
     const etePars = [];
@@ -10656,6 +10748,13 @@ function limpiar() {
   ['im_grado','ia_grado','it_grado'].forEach(id => { const el = document.getElementById(id); if (el) el.value = '0'; });
   document.querySelectorAll('textarea').forEach(el => el.value = '');
   document.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
+  // Prolapso mitral: desmarcar checkboxes, limpiar extensión, ocultar bloque
+  ['vm_seg_a1','vm_seg_a2','vm_seg_a3','vm_seg_p1','vm_seg_p2','vm_seg_p3','vm_seg_ca','vm_seg_cp','vm_flail','vm_rotura_cuerdas','vm_elongacion_cuerdas','vm_calc_anular','vm_engros_valvar','vm_exceso_tejido'].forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
+  { const _mm = document.getElementById('vm_prolapso_mm'); if (_mm) _mm.value = ''; }
+  { const _bp = document.getElementById('bloque-prolapso-vm'); if (_bp) _bp.style.display = 'none'; }
+  // Masa intracardíaca: resetear selector y ocultar bloque
+  { const _mp = document.getElementById('masa_presente'); if (_mp) _mp.selectedIndex = 0; }
+  { const _bm = document.getElementById('bloque-masa'); if (_bm) _bm.style.display = 'none'; }
   // Displays calculados / interpretativos → —
   document.querySelectorAll('.calc-box .calc-row span[id]:not(.calc-lbl)').forEach(el => el.innerHTML = '—');
   // Badges de sugerencia automática (THP, AVA, VP, etc.)
@@ -10676,8 +10775,70 @@ function limpiar() {
   localStorage.removeItem('sgl_incluir_pdf');
   _pdfToggleBtnState('contr-pdf-toggle', false);
   _pdfToggleBtnState('sgl-pdf-toggle', false);
+  try { localStorage.removeItem('ecosmart_autosave'); } catch(e) {}
   toast('🗑 Formulario limpiado');
 }
+
+// ══ Módulo Prolapso mitral: mostrar/ocultar panel de detalle ══
+function showProlapsoPanel(){
+  var v = (document.getElementById('vm_morf') || {}).value || '';
+  var bp = document.getElementById('bloque-prolapso-vm');
+  if (bp) bp.style.display = (v === 'Mixomatosa / Barlow' || v === 'Prolapso / EVMS') ? 'block' : 'none';
+}
+
+// ══ Módulo Masa intracardíaca: mostrar/ocultar panel ══
+function showMasaPanel(){
+  var v = (document.getElementById('masa_presente') || {}).value || '';
+  var bm = document.getElementById('bloque-masa');
+  if (bm) bm.style.display = (v === 'Masa / imagen intracardíaca presente') ? 'block' : 'none';
+}
+
+// ══ Autosave en localStorage (debounce 1500ms) ══
+var AUTOSAVE_KEY = 'ecosmart_autosave';
+var _autosaveTimer = null, _autosaveIndTimer = null;
+function _autosaveShowInd(){
+  var el = document.getElementById('autosave-indicator'); if (!el) return;
+  el.style.opacity = '1';
+  clearTimeout(_autosaveIndTimer);
+  _autosaveIndTimer = setTimeout(function(){ el.style.opacity = '0'; }, 2000);
+}
+function autoSave(){
+  try{
+    var data = {};
+    document.querySelectorAll('input[id], select[id], textarea[id]').forEach(function(el){
+      var t = el.type;
+      if (t === 'file' || t === 'button' || t === 'submit') return;
+      data[el.id] = (t === 'checkbox' || t === 'radio') ? !!el.checked : el.value;
+    });
+    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
+    _autosaveShowInd();
+  }catch(e){}
+}
+function _autoSaveDebounced(){ clearTimeout(_autosaveTimer); _autosaveTimer = setTimeout(autoSave, 1500); }
+function _autosaveRestore(){
+  var raw; try{ raw = localStorage.getItem(AUTOSAVE_KEY); }catch(e){ return; }
+  if (!raw) return;
+  var empty = true;
+  document.querySelectorAll('input[type=text], input[type=number], textarea').forEach(function(el){
+    if (el.id && String(el.value || '').trim() !== '') empty = false;
+  });
+  if (!empty) return;
+  var data; try{ data = JSON.parse(raw); }catch(e){ return; }
+  Object.keys(data).forEach(function(id){
+    var el = document.getElementById(id); if (!el) return;
+    var val = data[id];
+    if (el.type === 'checkbox' || el.type === 'radio') el.checked = !!val;
+    else if (val != null) el.value = val;
+  });
+  if (typeof showProlapsoPanel === 'function') showProlapsoPanel();
+}
+function _autosaveInit(){
+  _autosaveRestore();
+  document.addEventListener('input', _autoSaveDebounced, true);
+  document.addEventListener('change', _autoSaveDebounced, true);
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _autosaveInit);
+else _autosaveInit();
 
 // ══ PDF (jsPDF) ══
 // Panel de revisión de severidades antes de generar el PDF (TAREA 3)
